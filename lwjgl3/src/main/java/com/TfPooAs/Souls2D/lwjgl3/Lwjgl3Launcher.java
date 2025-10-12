@@ -2,7 +2,7 @@ package com.TfPooAs.Souls2D.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.TfPooAs.Souls2D.Main;
+import com.TfPooAs.Souls2D.core.Main;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {
