@@ -31,6 +31,9 @@ public class GameScreenManager {
     }
 
     public void dispose() {
-        if (activeScreen != null) activeScreen.dispose();
+        if (activeScreen != null) activeScreen.dispose(); }
+
+    public void hachatipazo() {
+
     }
 }
