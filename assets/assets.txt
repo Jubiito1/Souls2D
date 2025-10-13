@@ -1,4 +1,7 @@
 .gitkeep
+maps/New Piskel.png
+maps/cemetery.tmx
+maps/prueba.tsx
 ui/font-list.fnt
 ui/font-subtitle.fnt
 ui/font-window.fnt
