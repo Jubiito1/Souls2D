@@ -89,7 +89,7 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
         // Crear player con fixture sin fricción
-        player = new Player(world, 400, 300);
+        player = new Player(world, 200, 300);
         // Dentro del constructor del Player, asegurarse de hacer:
         // fixtureDef.friction = 0f;
         // playerBody.setUserData("player");

@@ -12,7 +12,7 @@ public class Player extends Entity {
     private Body body;
     private World world;
 
-    private float moveSpeed = 3f;
+    private float moveSpeed = 0.3f;
     private float jumpForce = 1f; // aumento para un salto más visible
     private boolean isGrounded = true;
 
@@ -59,13 +59,24 @@ public class Player extends Entity {
     private void handleInput() {
         Vector2 vel = body.getLinearVelocity();
 
+
         // Movimiento horizontal
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            body.setLinearVelocity(-moveSpeed, vel.y);
+            body.setLinearVelocity(vel.x - moveSpeed, vel.y);
+            if (vel.x < -2) {
+                moveSpeed = 0;
+            } else {
+                moveSpeed = 0.3f;
+            }
         } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            body.setLinearVelocity(moveSpeed, vel.y);
-        } else {
-            body.setLinearVelocity(0, vel.y); // frena horizontal
+            body.setLinearVelocity(vel.x + moveSpeed, vel.y);
+            if (vel.x > 2) {
+                moveSpeed = 0;
+            } else {
+                moveSpeed = 0.3f;
+            }
+        } else if (Math.abs(vel.y) < 0.01f){
+            body.setLinearVelocity(0, vel.y);
         }
 
         // Saltar solo si la velocidad Y es casi 0 (suelo)
