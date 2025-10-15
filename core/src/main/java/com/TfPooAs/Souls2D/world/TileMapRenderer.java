@@ -14,7 +14,7 @@ public class TileMapRenderer {
     public TileMapRenderer(TiledMap map) {
         this.map = map;
         // unitScale = 1 / PPM
-        this.renderer = new OrthogonalTiledMapRenderer(map, 50 / Constants.PPM);
+        renderer = new OrthogonalTiledMapRenderer(map, 1f);
     }
 
     public void render(OrthographicCamera camera) {
