@@ -4,6 +4,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 
+import com.TfPooAs.Souls2D.utils.Constants;
+
 public class TileMapRenderer {
 
     private OrthogonalTiledMapRenderer renderer;
@@ -12,7 +14,7 @@ public class TileMapRenderer {
     public TileMapRenderer(TiledMap map) {
         this.map = map;
         // unitScale = 1 / PPM
-        this.renderer = new OrthogonalTiledMapRenderer(map, 1 / 32f);
+        this.renderer = new OrthogonalTiledMapRenderer(map, 50 / Constants.PPM);
     }
 
     public void render(OrthographicCamera camera) {

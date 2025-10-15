@@ -12,6 +12,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
+import com.TfPooAs.Souls2D.entities.Player;
 
 public class GameScreen implements Screen {
 
@@ -27,6 +28,8 @@ public class GameScreen implements Screen {
     private World world;
     private LevelLoader levelLoader;
     private TileMapRenderer tileMapRenderer;
+
+    private Player player;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -63,8 +66,12 @@ public class GameScreen implements Screen {
         // Dibujar entidades (player, enemigos, NPCs)
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        // TODO: dibujar player, enemigos, NPCs aquí
+
+        player.render(batch);
+
         batch.end();
+
+        player.update(Gdx.graphics.getDeltaTime());
 
         // Actualizar mundo físico
         world.step(1 / 60f, 6, 2);
@@ -77,7 +84,9 @@ public class GameScreen implements Screen {
         viewport.update(width, height, true);
     }
 
-    @Override public void show() {}
+    @Override public void show() {
+        player = new Player(100, 100);
+    }
     @Override public void hide() {}
     @Override public void pause() {}
     @Override public void resume() {}
