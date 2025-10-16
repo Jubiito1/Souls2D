@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="26">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="162">
  <editorsettings>
   <export target="../../Documents/ProyectosGDX/Souls2D/assets/maps/cemetery.tmx" format="tmx"/>
  </editorsettings>
@@ -41,5 +41,45 @@
    <polygon points="0,0 64,-64 64,0"/>
   </object>
   <object id="24" x="-416" y="512" width="736" height="128"/>
+  <object id="51" x="-96" y="502.727" width="73.2727" height="9.27273"/>
+  <object id="53" x="-22.9091" y="502.545">
+   <polygon points="0,0 9.63636,9.45455 0,9.45455"/>
+  </object>
+  <object id="60" x="-96.1818" y="491.818" width="60.9091" height="10.9091"/>
+  <object id="61" x="-35.2727" y="492">
+   <polygon points="0,0 10.5455,10.5455 -0.181818,11.0909"/>
+  </object>
+  <object id="63" x="-95.8182" y="481.273" width="49.0909" height="10.5455"/>
+  <object id="64" x="-46.9091" y="481.636">
+   <polygon points="0,0 9.09091,10 0,10.3636"/>
+  </object>
+  <object id="66" x="-95.6364" y="470.727" width="38.1818" height="10.3636"/>
+  <object id="67" x="-57.4545" y="470.727">
+   <polygon points="0,0 8,10.3636 -0.181818,10.3636"/>
+  </object>
+  <object id="68" x="-95.4545" y="460.545" width="26.1818" height="10"/>
+  <object id="69" x="-69.0909" y="460.545">
+   <polygon points="0,0 7.81818,10.1818 0,10.3636"/>
+  </object>
+  <object id="152" x="-156.545" y="452.455" width="73.2727" height="9.27273"/>
+  <object id="153" x="-83.4545" y="452.273">
+   <polygon points="0,0 9.63636,9.45455 0,9.45455"/>
+  </object>
+  <object id="154" x="-156.727" y="441.546" width="60.9091" height="10.9091"/>
+  <object id="155" x="-95.8182" y="441.728">
+   <polygon points="0,0 10.5455,10.5455 -0.181818,11.0909"/>
+  </object>
+  <object id="156" x="-156.364" y="431.001" width="49.0909" height="10.5455"/>
+  <object id="157" x="-107.455" y="431.364">
+   <polygon points="0,0 9.09091,10 0,10.3636"/>
+  </object>
+  <object id="158" x="-156.182" y="420.455" width="38.1818" height="10.3636"/>
+  <object id="159" x="-118" y="420.455">
+   <polygon points="0,0 8,10.3636 -0.181818,10.3636"/>
+  </object>
+  <object id="160" x="-156" y="410.273" width="26.1818" height="10"/>
+  <object id="161" x="-129.636" y="410.273">
+   <polygon points="0,0 7.81818,10.1818 0,10.3636"/>
+  </object>
  </objectgroup>
 </map>
