@@ -1,7 +1,13 @@
 package com.TfPooAs.Souls2D.screens;
 
-import com.badlogic.gdx.Screen;
+import com.TfPooAs.Souls2D.core.Main;
+import com.TfPooAs.Souls2D.entities.Player;
+import com.TfPooAs.Souls2D.entities.enemies.EnemyMelee;
+import com.TfPooAs.Souls2D.utils.Constants;
+import com.TfPooAs.Souls2D.world.LevelLoader;
+import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -9,12 +15,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.TfPooAs.Souls2D.utils.Constants;
-
-import com.TfPooAs.Souls2D.core.Main;
-import com.TfPooAs.Souls2D.world.LevelLoader;
-import com.TfPooAs.Souls2D.world.TileMapRenderer;
-import com.TfPooAs.Souls2D.entities.Player;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.math.Rectangle;
+import java.util.ArrayList;
 
 public class GameScreen implements Screen {
 
@@ -32,7 +36,9 @@ public class GameScreen implements Screen {
     private LevelLoader levelLoader;
     private TileMapRenderer tileMapRenderer;
 
+    // Entidades
     private Player player;
+    private ArrayList<EnemyMelee> enemies;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -44,10 +50,8 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         debugRenderer = new Box2DDebugRenderer();
 
-        // Crear mundo Box2D
         world = new World(new Vector2(0, -9.8f), true);
 
-        // Cargar mapa y colisiones
         levelLoader = new LevelLoader(world, "maps/cemetery.tmx");
         tileMapRenderer = new TileMapRenderer(levelLoader.getMap());
 
@@ -79,20 +83,23 @@ public class GameScreen implements Screen {
                 }
             }
 
-            @Override
-            public void preSolve(Contact contact, Manifold oldManifold) {}
-            @Override
-            public void postSolve(Contact contact, ContactImpulse impulse) {}
+            @Override public void preSolve(Contact contact, Manifold oldManifold) {}
+            @Override public void postSolve(Contact contact, ContactImpulse impulse) {}
         });
     }
 
     @Override
     public void show() {
-        // Crear player con fixture sin fricción
+        // Crear jugador
         player = new Player(world, 200, 300);
-        // Dentro del constructor del Player, asegurarse de hacer:
-        // fixtureDef.friction = 0f;
-        // playerBody.setUserData("player");
+
+        // Crear enemigos
+        enemies = new ArrayList<>();
+        MapObjects objects = levelLoader.getMap().getLayers().get("Enemies").getObjects();
+        for (RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
+            Rectangle rect = obj.getRectangle();
+            enemies.add(new EnemyMelee(player, rect.x, rect.y, "EnemieMelee.png"));
+        }
     }
 
     @Override
@@ -101,26 +108,32 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Actualizar mundo
+        // Actualizar mundo Box2D
         world.step(1 / 60f, 6, 2);
 
-        // Actualizar player (movimiento lateral + salto)
+        // Actualizar player y enemigos
         player.update(delta);
+        for (EnemyMelee enemy : enemies) {
+            enemy.update(delta);
+        }
 
-        // Seguir al jugador
+        // Mover cámara siguiendo al jugador
         camera.position.set(player.getPosition().x, player.getPosition().y, 0);
         camera.update();
 
-        // Dibujar mapa
+        // Renderizar mapa
         tileMapRenderer.render(camera);
 
-        // Dibujar entidades
+        // Renderizar player y enemigos
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         player.render(batch);
+        for (EnemyMelee enemy : enemies) {
+            enemy.render(batch);
+        }
         batch.end();
 
-        // Debug de colisiones
+        // Renderizar debug de Box2D
         debugRenderer.render(world, camera.combined.scl(Constants.PPM));
     }
 
