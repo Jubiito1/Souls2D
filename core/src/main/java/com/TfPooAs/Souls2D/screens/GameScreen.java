@@ -120,8 +120,13 @@ public class GameScreen implements Screen {
         player.render(batch);
         batch.end();
 
-        // Debug de colisiones
+        // Debug de colisiones (opcional)
         debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+
+        // Detectar ESC para pausa: usamos el GameScreenManager para mostrar PauseMenu
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            game.gsm.showPauseMenu(this);
+        }
     }
 
     @Override
