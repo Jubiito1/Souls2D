@@ -1,43 +1,48 @@
 package com.TfPooAs.Souls2D.entities;
 
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
 public abstract class Entity {
+
     protected Vector2 position;
+    protected TextureRegion texture;
     protected float width, height;
-    protected Texture texture;
-    protected boolean active = true; // útil para eliminar entidades
 
-    public Entity(float x, float y, String texturePath) {
+    protected int health = 100;
+    protected boolean isAlive = true;
+    protected boolean active = true;
+
+    protected boolean facingRight = true;
+
+    public Entity(float x, float y, TextureRegion texture) {
         this.position = new Vector2(x, y);
-        this.texture = new Texture(texturePath);
-        this.width = texture.getWidth();
-        this.height = texture.getHeight();
+        this.texture = texture;
+        this.width = texture.getRegionWidth();
+        this.height = texture.getRegionHeight();
     }
 
-    // Método para actualizar la lógica
     public abstract void update(float delta);
+    public abstract void render(SpriteBatch batch);
 
-    // Método para dibujar
-    public void render(SpriteBatch batch) {
-        if (active && texture != null) {
-            batch.draw(texture, position.x, position.y, width, height);
-        }
+    public void takeDamage(int damage) {
+        if (!isAlive) return;
+        health -= damage;
+        if (health <= 0) die();
     }
 
-    // Getters y setters útiles
+    protected void die() {
+        isAlive = false;
+        active = false;
+        System.out.println(getClass().getSimpleName() + " murió.");
+    }
+
+    // Getters y setters
     public Vector2 getPosition() { return position; }
-    public void setPosition(float x, float y) { position.set(x, y); }
-
-    public float getWidth() { return width; }
-    public float getHeight() { return height; }
-
+    public boolean isAlive() { return isAlive; }
     public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
 
-    public void dispose() {
-        if (texture != null) texture.dispose();
+    public void setGrounded(boolean b) {
     }
 }
