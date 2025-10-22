@@ -4,7 +4,9 @@ import com.TfPooAs.Souls2D.core.Main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
@@ -14,6 +16,8 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 
 /**
  * PauseOverlay: overlay de UI que se dibuja sobre GameScreen sin cambiar de Screen.
+ * Ahora incluye un headerImage centrado en el borde superior que no oscurece
+ * el resto del overlay (solo su área).
  */
 public class PauseOverlay {
     private final Stage stage;
@@ -21,13 +25,21 @@ public class PauseOverlay {
     private final Texture dimTexture; // 1x1 texture para dimming
     private final GameScreen gameScreen;
 
+    // header image
+    private Texture headerTexture;
+    private Image headerImage;
+    private float headerWidth = 700f;  // ajustá si querés
+    private float headerHeight = 375f; // ajustá si querés
+    private float headerTopMargin = 30f; // margen desde el borde superior
+
     public PauseOverlay(Main game, GameScreen gameScreen) {
         this.gameScreen = gameScreen;
         stage = new Stage(new ScreenViewport());
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json")); // ruta: core/assets/ui/uiskin.json
+        skin = new Skin(Gdx.files.internal("ui/uiskin.json")); // requiere core/assets/ui/uiskin.json
         dimTexture = create1x1Texture();
 
         buildUI();
+        loadHeader();          // carga y posiciona el header
     }
 
     private void buildUI() {
@@ -62,13 +74,40 @@ public class PauseOverlay {
             }
         });
 
-        t.add(resume).width(300).height(56).pad(6);
+        float btnW = 300f, btnH = 56f, pad = 6f;
+        t.add(resume).width(btnW).height(btnH).pad(pad);
         t.row();
-        t.add(options).width(300).height(56).pad(6);
+        t.add(options).width(btnW).height(btnH).pad(pad);
         t.row();
-        t.add(quit).width(300).height(56).pad(6);
+        t.add(quit).width(btnW).height(btnH).pad(pad);
 
         stage.addActor(t);
+    }
+
+    private void loadHeader() {
+        // Cargar la textura del header. Ruta: core/assets/ui/pause_header.png
+        try {
+            headerTexture = new Texture(Gdx.files.internal("ui/pause_header.png"));
+            headerImage = new Image(new TextureRegion(headerTexture));
+            headerImage.setSize(headerWidth, headerHeight);
+            positionHeader(); // coloca en viewport actual
+            // Insertar el header ANTES de la UI para que no tape botones (si querés lo pongas encima)
+            stage.addActor(headerImage);
+        } catch (Exception e) {
+            // Si falta el asset, evitamos crash y seguimos sin header
+            headerTexture = null;
+            headerImage = null;
+            Gdx.app.log("PauseOverlay", "No se pudo cargar pause_header.png: " + e.getMessage());
+        }
+    }
+
+    private void positionHeader() {
+        if (headerImage == null) return;
+        float vw = stage.getViewport().getWorldWidth();
+        float vh = stage.getViewport().getWorldHeight();
+        float x = (vw - headerWidth) / 2f;
+        float y = vh - headerHeight - headerTopMargin;
+        headerImage.setPosition(x, y);
     }
 
     // Dibuja el overlay (dimming + stage)
@@ -84,7 +123,7 @@ public class PauseOverlay {
         stage.getBatch().setColor(1f, 1f, 1f, 1f);
         stage.getBatch().end();
 
-        // Dibujamos los widgets (botones)
+        // Dibujamos los widgets (botones y header)
         stage.draw();
     }
 
@@ -93,6 +132,9 @@ public class PauseOverlay {
     }
 
     public void show() {
+        // Actualizamos viewport y posición header al mostrar
+        stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        positionHeader();
         Gdx.input.setInputProcessor(stage);
     }
 
@@ -104,6 +146,7 @@ public class PauseOverlay {
         stage.dispose();
         skin.dispose();
         dimTexture.dispose();
+        if (headerTexture != null) headerTexture.dispose();
     }
 
     private Texture create1x1Texture() {

@@ -43,7 +43,7 @@ public class MainMenuScreen implements Screen {
         Table table = new Table();
         table.setFillParent(true);
         table.bottom(); // alineamos al fondo de la pantalla
-        table.padBottom(100f); // separacion desde el borde inferior (ajusta este valor)
+        table.padBottom(50f); // separacion desde el borde inferior (ajusta este valor)
 
         // Botones
         TextButton newGame = new TextButton("Nueva Partida", skin);
