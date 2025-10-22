@@ -15,6 +15,9 @@ public class Player extends Entity {
     private float moveSpeed = 0.3f;
     private float jumpForce = 1f;
 
+    // Estado de suelo (usado por el ContactListener en GameScreen)
+    private boolean grounded = false;
+
     public Player(World world, float x, float y) {
         super(x, y, "player.png" );
         this.world = world;
@@ -38,6 +41,7 @@ public class Player extends Entity {
         fdef.filter.categoryBits = Constants.BIT_PLAYER;
         fdef.filter.maskBits = Constants.BIT_GROUND;
 
+        // Asegurarse de marcar la fixture del player para que el ContactListener la identifique
         body.createFixture(fdef).setUserData("player");
         shape.dispose();
     }
@@ -69,14 +73,36 @@ public class Player extends Entity {
             body.setLinearVelocity(0, vel.y);
         }
 
-        // Saltar solo si está en el suelo
-        if (Gdx.input.isKeyJustPressed(Input.Keys.W) && Math.abs(vel.y) < 0.01f) {
+        // Saltar solo si está en el suelo (usamos grounded en lugar de chequear la velocidad vertical)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.W) && grounded) {
             body.applyLinearImpulse(new Vector2(0, jumpForce), body.getWorldCenter(), true);
+            grounded = false; // evitamos dobles saltos hasta que el ContactListener vuelva a setearlo
         }
     }
 
     @Override
     public void render(SpriteBatch batch) {
         if (active) batch.draw(texture, position.x, position.y, width, height);
+    }
+
+    // --- Métodos añadidos para la integración con ContactListener ---
+
+    /**
+     * Llamar desde el ContactListener cuando el player entre/salga de contacto con el suelo.
+     */
+    public void setGrounded(boolean grounded) {
+        this.grounded = grounded;
+    }
+
+    /**
+     * Consultar si el player está apoyado en el suelo.
+     */
+    public boolean isGrounded() {
+        return grounded;
+    }
+
+    // Exponer body si alguna lógica externa necesita accederlo (opcional)
+    public Body getBody() {
+        return body;
     }
 }
