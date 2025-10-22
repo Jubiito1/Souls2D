@@ -5,7 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.TfPooAs.Souls2D.screens.GameScreen;
 import com.TfPooAs.Souls2D.screens.MainMenuScreen;
 import com.TfPooAs.Souls2D.screens.OptionsMenu;
-import com.TfPooAs.Souls2D.screens.PauseMenu;
+
 
 public class GameScreenManager {
     private final Main game;
@@ -57,11 +57,6 @@ public class GameScreenManager {
         setActiveScreenKeepPrevious(new OptionsMenu(game, returnTo));
     }
 
-    // Abre PauseMenu (lo tratamos como pantalla normal)
-    public void showPauseMenu(Screen gameScreen) {
-        // Mantener la pantalla previa en memory para poder "continuar" correctamente
-        setActiveScreenKeepPrevious(new PauseMenu(game, gameScreen));
-    }
 
     // Restaurar la pantalla previa (call desde Options -> "Volver")
     public void restorePreviousScreen() {

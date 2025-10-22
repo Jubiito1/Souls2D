@@ -36,7 +36,6 @@ public class MainMenuScreen implements Screen {
 
         TextButton newGame = new TextButton("Nueva Partida", skin);
         TextButton cont = new TextButton("Continuar", skin);
-        TextButton load = new TextButton("Cargar Partida", skin);
         TextButton options = new TextButton("Opciones", skin);
         TextButton exit = new TextButton("Salir", skin);
 
@@ -56,12 +55,7 @@ public class MainMenuScreen implements Screen {
             }
         });
 
-        load.addListener(new ChangeListener() {
-            @Override public void changed(ChangeEvent event, Actor actor) {
-                // aquí podrías abrir un diálogo con saves
-                game.gsm.showGameScreen();
-            }
-        });
+
 
         options.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
@@ -79,8 +73,6 @@ public class MainMenuScreen implements Screen {
         table.add(newGame).width(360).height(64).pad(6);
         table.row();
         table.add(cont).width(360).height(64).pad(6);
-        table.row();
-        table.add(load).width(360).height(64).pad(6);
         table.row();
         table.add(options).width(360).height(64).pad(6);
         table.row();
