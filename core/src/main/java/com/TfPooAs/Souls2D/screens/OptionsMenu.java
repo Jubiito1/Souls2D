@@ -52,7 +52,6 @@ public class OptionsMenu implements Screen {
         TextButton back = new TextButton("Volver", skin);
         back.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                // Restauramos la pantalla previa desde el GSM
                 game.gsm.restorePreviousScreen();
             }
         });

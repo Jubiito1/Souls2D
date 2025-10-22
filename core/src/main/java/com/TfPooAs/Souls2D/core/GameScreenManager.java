@@ -58,20 +58,26 @@ public class GameScreenManager {
     }
 
 
-    // Restaurar la pantalla previa (call desde Options -> "Volver")
     public void restorePreviousScreen() {
         if (previousScreen != null) {
-            // descartamos la pantalla actual (Options)
             if (activeScreen != null) {
                 activeScreen.hide();
                 activeScreen.dispose();
             }
-            // restauramos la previa
             activeScreen = previousScreen;
             previousScreen = null;
             game.setScreen(activeScreen);
+
+            // Si la pantalla restaurada es GameScreen y está pausada,
+            // avisamos para que reactive su overlay (input y viewport).
+            if (activeScreen instanceof com.TfPooAs.Souls2D.screens.GameScreen) {
+                com.TfPooAs.Souls2D.screens.GameScreen gs =
+                    (com.TfPooAs.Souls2D.screens.GameScreen) activeScreen;
+                if (gs.isPaused()) {
+                    gs.onOverlayReturned();
+                }
+            }
         } else {
-            // fallback: si no hay previa, mostramos el MainMenu
             showMainMenu();
         }
     }

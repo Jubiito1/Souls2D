@@ -169,6 +169,24 @@ public class GameScreen implements Screen {
     public Main getGame() {
         return game;
     }
+    // Getter para saber si el GameScreen está en pausa
+    public boolean isPaused() {
+        return isPaused;
+    }
+
+    /**
+     * Llamado desde el GameScreenManager cuando restauramos esta pantalla desde Options u otra pantalla.
+     * Si el game estaba en pausa, hay que reactivar el overlay (input + viewport).
+     */
+    public void onOverlayReturned() {
+        if (isPaused && pauseOverlay != null) {
+            // Reajusta viewport del overlay por si cambió tamaño
+            pauseOverlay.getStage().getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+            // Asegura que el input vaya al overlay
+            pauseOverlay.show();
+        }
+    }
+
 
     @Override
     public void dispose() {
