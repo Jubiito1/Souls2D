@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
@@ -62,11 +63,13 @@ public class GameScreen implements Screen {
                 Fixture a = contact.getFixtureA();
                 Fixture b = contact.getFixtureB();
 
-                if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                    b.getUserData() != null && b.getUserData().equals("ground")) ||
-                    (b.getUserData() != null && b.getUserData().equals("player") &&
-                        a.getUserData() != null && a.getUserData().equals("ground"))) {
-                    player.setGrounded(true);
+                if (player != null) {
+                    if ((a.getUserData() != null && a.getUserData().equals("player") &&
+                        b.getUserData() != null && b.getUserData().equals("ground")) ||
+                        (b.getUserData() != null && b.getUserData().equals("player") &&
+                            a.getUserData() != null && a.getUserData().equals("ground"))) {
+                        player.setGrounded(true);
+                    }
                 }
             }
 
@@ -75,11 +78,13 @@ public class GameScreen implements Screen {
                 Fixture a = contact.getFixtureA();
                 Fixture b = contact.getFixtureB();
 
-                if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                    b.getUserData() != null && b.getUserData().equals("ground")) ||
-                    (b.getUserData() != null && b.getUserData().equals("player") &&
-                        a.getUserData() != null && a.getUserData().equals("ground"))) {
-                    player.setGrounded(false);
+                if (player != null) {
+                    if ((a.getUserData() != null && a.getUserData().equals("player") &&
+                        b.getUserData() != null && b.getUserData().equals("ground")) ||
+                        (b.getUserData() != null && b.getUserData().equals("player") &&
+                            a.getUserData() != null && a.getUserData().equals("ground"))) {
+                        player.setGrounded(false);
+                    }
                 }
             }
 
@@ -90,15 +95,19 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        // Crear jugador
+        // Crear jugador (asegurarse que Player maneje la creación del body y userData)
         player = new Player(world, 200, 300);
 
         // Crear enemigos
         enemies = new ArrayList<>();
         MapObjects objects = levelLoader.getMap().getLayers().get("Enemies").getObjects();
-        for (RectangleMapObject obj : objects.getByType(RectangleMapObject.class)) {
-            Rectangle rect = obj.getRectangle();
-            enemies.add(new EnemyMelee(player, rect.x, rect.y, "EnemieMelee.png"));
+        // iterar de forma segura y soportar distintos tipos de MapObject
+        for (MapObject mo : objects) {
+            if (mo instanceof RectangleMapObject) {
+                Rectangle rect = ((RectangleMapObject) mo).getRectangle();
+                // Instanciar EnemyMelee con la firma: EnemyMelee(World world, float x, float y, Player player)
+                enemies.add(new EnemyMelee(world, rect.x, rect.y, player));
+            }
         }
     }
 
@@ -112,13 +121,15 @@ public class GameScreen implements Screen {
         world.step(1 / 60f, 6, 2);
 
         // Actualizar player y enemigos
-        player.update(delta);
+        if (player != null) player.update(delta);
         for (EnemyMelee enemy : enemies) {
             enemy.update(delta);
         }
 
-        // Mover cámara siguiendo al jugador
-        camera.position.set(player.getPosition().x, player.getPosition().y, 0);
+        // Mover cámara siguiendo al jugador (proteger contra player nulo)
+        if (player != null) {
+            camera.position.set(player.getPosition().x, player.getPosition().y, 0);
+        }
         camera.update();
 
         // Renderizar mapa
@@ -127,14 +138,14 @@ public class GameScreen implements Screen {
         // Renderizar player y enemigos
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        player.render(batch);
+        if (player != null) player.render(batch);
         for (EnemyMelee enemy : enemies) {
             enemy.render(batch);
         }
         batch.end();
 
-        // Renderizar debug de Box2D
-        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+        // Renderizar debug de Box2D usando una copia escalada de la matriz de cámara
+        debugRenderer.render(world, camera.combined.cpy().scl(Constants.PPM));
     }
 
     @Override
