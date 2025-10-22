@@ -1,11 +1,12 @@
 package com.TfPooAs.Souls2D.screens;
 
 import com.TfPooAs.Souls2D.core.Main;
-import com.TfPooAs.Souls2D.core.GameScreenManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -17,6 +18,7 @@ public class MainMenuScreen implements Screen {
     private final Main game;
     private Stage stage;
     private Skin skin;
+    private Image backgroundImage;
 
     public MainMenuScreen(Main game) {
         this.game = game;
@@ -27,21 +29,32 @@ public class MainMenuScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
 
-        // Cargá un skin en assets/ui/uiskin.json
+        // Carga skin (asegurate de tener uiskin.json en core/assets/ui/)
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
+        // Cargar imagen de fondo (asegurate de poner menu_bg.png en core/assets/ui/)
+        Texture bgTex = new Texture(Gdx.files.internal("ui/menu_bg.png"));
+        backgroundImage = new Image(bgTex);
+        backgroundImage.setFillParent(true); // hace que ocupe toda la viewport del stage
+        backgroundImage.setScaling(com.badlogic.gdx.utils.Scaling.fill); // rellena la pantalla (puede recortar)
+        stage.addActor(backgroundImage); // añadimos primero el fondo (detrás)
+
+        // Tabla para botones
         Table table = new Table();
         table.setFillParent(true);
-        table.center();
+        table.bottom(); // alineamos al fondo de la pantalla
+        table.padBottom(100f); // separacion desde el borde inferior (ajusta este valor)
 
+        // Botones
         TextButton newGame = new TextButton("Nueva Partida", skin);
         TextButton cont = new TextButton("Continuar", skin);
         TextButton options = new TextButton("Opciones", skin);
         TextButton exit = new TextButton("Salir", skin);
 
-        // por ahora, Continuar/ Cargar se comportan igual (si no hay saves, podrían deshabilitarse)
-        cont.setDisabled(true); // habilitalo cuando implementes saves
+        // Ejemplo: deshabilitar Continuar si no hay save
+        cont.setDisabled(true);
 
+        // Listeners
         newGame.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
                 game.gsm.showGameScreen();
@@ -50,15 +63,14 @@ public class MainMenuScreen implements Screen {
 
         cont.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                // implementá carga real con SaveSystem si ya lo tenés
-                game.gsm.showGameScreen();
+                game.gsm.showGameScreen(); // más adelante conectar con SaveSystem
             }
         });
 
 
-
         options.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
+                // Abrir opciones y mantener esta pantalla guardada por el GSM
                 game.gsm.showOptions(MainMenuScreen.this);
             }
         });
@@ -69,15 +81,17 @@ public class MainMenuScreen implements Screen {
             }
         });
 
-        table.pad(20);
-        table.add(newGame).width(360).height(64).pad(6);
+        // Layout: podemos apilar verticalmente los botones con espaciado
+        float btnW = 420f, btnH = 64f, pad = 8f;
+        table.add(newGame).width(btnW).height(btnH).pad(pad);
         table.row();
-        table.add(cont).width(360).height(64).pad(6);
+        table.add(cont).width(btnW).height(btnH).pad(pad);
         table.row();
-        table.add(options).width(360).height(64).pad(6);
+        table.add(options).width(btnW).height(btnH).pad(pad);
         table.row();
-        table.add(exit).width(360).height(64).pad(6);
+        table.add(exit).width(btnW).height(btnH).pad(pad);
 
+        // Añadimos la tabla **después** del background (para que quede en frente)
         stage.addActor(table);
     }
 
@@ -88,17 +102,33 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        // Fondo oscuro
-        Gdx.gl.glClearColor(0.05f, 0.05f, 0.05f, 1);
+        // limpiar pantalla
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.act(Math.min(delta, 1/30f));
         stage.draw();
     }
 
-    @Override public void resize(int width, int height) { stage.getViewport().update(width, height, true); }
+    @Override
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
+
+        // si querés forzar reescalado del background manual:
+        if (backgroundImage != null) {
+            backgroundImage.setSize(stage.getViewport().getWorldWidth(), stage.getViewport().getWorldHeight());
+        }
+    }
+
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
-    @Override public void dispose() { stage.dispose(); skin.dispose(); }
+    @Override
+    public void dispose() {
+        stage.dispose();
+        skin.dispose();
+        // IMPORTANTE: Si reutilizás ese texture en otros lugares NO hagas dispose() aquí;
+        // si solo se usa aquí, está bien:
+      //  backgroundImage.getDrawable().getTexture().dispose();
+    }
 }

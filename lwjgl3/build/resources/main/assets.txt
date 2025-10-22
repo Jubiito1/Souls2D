@@ -7,6 +7,7 @@ ui/font-list.fnt
 ui/font-subtitle.fnt
 ui/font-window.fnt
 ui/font.fnt
+ui/menu_bg.png
 ui/uiskin.atlas
 ui/uiskin.json
 ui/uiskin.png
