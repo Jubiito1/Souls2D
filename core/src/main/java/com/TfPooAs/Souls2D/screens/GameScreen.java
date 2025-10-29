@@ -3,6 +3,7 @@ package com.TfPooAs.Souls2D.screens;
 import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.entities.Player;
 import com.TfPooAs.Souls2D.entities.enemies.EnemyMelee;
+import com.TfPooAs.Souls2D.entities.items.Bonfire;
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
@@ -40,6 +41,7 @@ public class GameScreen implements Screen {
     // Entidades
     private Player player;
     private ArrayList<EnemyMelee> enemies;
+    private Bonfire bonfire;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -100,15 +102,24 @@ public class GameScreen implements Screen {
 
         // Crear enemigos
         enemies = new ArrayList<>();
-        MapObjects objects = levelLoader.getMap().getLayers().get("Enemies").getObjects();
-        // iterar de forma segura y soportar distintos tipos de MapObject
-        for (MapObject mo : objects) {
-            if (mo instanceof RectangleMapObject) {
-                Rectangle rect = ((RectangleMapObject) mo).getRectangle();
-                // Instanciar EnemyMelee con la firma: EnemyMelee(World world, float x, float y, Player player)
-                enemies.add(new EnemyMelee(world, rect.x, rect.y, player));
+        // Capa de enemigos puede no existir; evitar NPE
+        com.badlogic.gdx.maps.MapLayer enemiesLayer = levelLoader.getMap().getLayers().get("Enemies");
+        if (enemiesLayer != null) {
+            MapObjects objects = enemiesLayer.getObjects();
+            // iterar de forma segura y soportar distintos tipos de MapObject
+            for (MapObject mo : objects) {
+                if (mo instanceof RectangleMapObject) {
+                    Rectangle rect = ((RectangleMapObject) mo).getRectangle();
+                    // Instanciar EnemyMelee con la firma: EnemyMelee(World world, float x, float y, Player player)
+                    enemies.add(new EnemyMelee(world, rect.x, rect.y, player));
+                }
             }
+        } else {
+            Gdx.app.log("GameScreen", "Layer 'Enemies' no encontrada en el mapa. Continuando sin enemigos.");
         }
+
+        // Crear una fogata cerca del inicio del nivel
+        bonfire = new Bonfire(300, 300);
     }
 
     @Override
@@ -125,6 +136,7 @@ public class GameScreen implements Screen {
         for (EnemyMelee enemy : enemies) {
             enemy.update(delta);
         }
+        if (bonfire != null) bonfire.update(player, delta);
 
         // Mover cámara siguiendo al jugador (proteger contra player nulo)
         if (player != null) {
@@ -135,13 +147,14 @@ public class GameScreen implements Screen {
         // Renderizar mapa
         tileMapRenderer.render(camera);
 
-        // Renderizar player y enemigos
+        // Renderizar player, enemigos y fogata
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         if (player != null) player.render(batch);
         for (EnemyMelee enemy : enemies) {
             enemy.render(batch);
         }
+        if (bonfire != null) bonfire.render(batch);
         batch.end();
 
         // Renderizar debug de Box2D usando una copia escalada de la matriz de cámara
@@ -164,5 +177,6 @@ public class GameScreen implements Screen {
         levelLoader.dispose();
         world.dispose();
         debugRenderer.dispose();
+        if (bonfire != null) bonfire.dispose();
     }
 }
