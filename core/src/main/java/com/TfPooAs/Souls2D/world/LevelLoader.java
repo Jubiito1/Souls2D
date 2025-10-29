@@ -51,7 +51,8 @@ public class LevelLoader {
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
                 fdef.filter.maskBits = Constants.BIT_PLAYER;
 
-                body.createFixture(fdef);
+                Fixture groundFixture = body.createFixture(fdef);
+                groundFixture.setUserData("ground");
                 shape.dispose();
             }
 
@@ -99,7 +100,8 @@ public class LevelLoader {
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
                 fdef.filter.maskBits = Constants.BIT_PLAYER;
 
-                body.createFixture(fdef);
+                Fixture groundFixturePoly = body.createFixture(fdef);
+                groundFixturePoly.setUserData("ground");
                 shape.dispose();
             }
         }
