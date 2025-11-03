@@ -41,11 +41,14 @@ public class DeathOverlay {
         root.center();
 
         Label title = new Label("HAS MUERTO", skin);
-        // Hacemos el título grande
-        title.setFontScale(3.0f);
+        // Hacemos el título más grande
+        title.setFontScale(20.0f);
 
         TextButton retry = new TextButton("Reintentar", skin);
         TextButton toMenu = new TextButton("Volver al menú principal", skin);
+        // Agrandar el texto de los botones
+        retry.getLabel().setFontScale(2.0f);
+        toMenu.getLabel().setFontScale(2.0f);
 
         retry.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
@@ -60,8 +63,8 @@ public class DeathOverlay {
             }
         });
 
-        float btnW = 360f, btnH = 64f, pad = 10f;
-        root.add(title).padBottom(20f);
+        float btnW = 400f, btnH = 50f, pad = 14f;
+        root.add(title).padBottom(30f);
         root.row();
         root.add(retry).width(btnW).height(btnH).pad(pad);
         root.row();
