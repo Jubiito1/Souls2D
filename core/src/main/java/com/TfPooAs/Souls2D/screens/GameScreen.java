@@ -38,6 +38,10 @@ public class GameScreen implements Screen {
     private PauseOverlay pauseOverlay;
     private boolean isPaused = false;
 
+    // Death overlay (para pruebas manuales sobre GameScreen)
+    private DeathOverlay deathOverlay;
+    private boolean isDeathShown = false;
+
     public GameScreen(Main game) {
         this.game = game;
 
@@ -96,12 +100,23 @@ public class GameScreen implements Screen {
         if (pauseOverlay == null) {
             pauseOverlay = new PauseOverlay(game, this);
         }
+        if (deathOverlay == null) {
+            deathOverlay = new DeathOverlay(game, this);
+        }
     }
 
     @Override
     public void render(float delta) {
-        // Toggle pausa con ESC
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+        // Activar overlay de muerte para pruebas con tecla D (solo si no está ya mostrado)
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.D)) {
+            if (!isDeathShown) {
+                isDeathShown = true;
+                if (deathOverlay != null) deathOverlay.show();
+            }
+        }
+
+        // Toggle pausa con ESC (solo si no está el overlay de muerte)
+        if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             if (!isPaused) {
                 isPaused = true;
                 pauseOverlay.show();
@@ -115,8 +130,8 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Actualizar mundo solo si no estamos en pausa
-        if (!isPaused) {
+        // Actualizar mundo solo si no estamos en pausa ni mostrando muerte
+        if (!isPaused && !isDeathShown) {
             world.step(1 / 60f, 6, 2);
             if (player != null) player.update(delta);
         }
@@ -142,6 +157,10 @@ public class GameScreen implements Screen {
         if (isPaused && pauseOverlay != null) {
             pauseOverlay.render(delta);
         }
+        // Si está el overlay de muerte activo, render por encima de todo
+        if (isDeathShown && deathOverlay != null) {
+            deathOverlay.render(delta);
+        }
     }
 
     @Override
@@ -150,9 +169,15 @@ public class GameScreen implements Screen {
         if (pauseOverlay != null) {
             pauseOverlay.getStage().getViewport().update(width, height, true);
         }
+        if (deathOverlay != null) {
+            deathOverlay.getStage().getViewport().update(width, height, true);
+        }
     }
 
-    @Override public void hide() {}
+    @Override public void hide() {
+        if (pauseOverlay != null) pauseOverlay.hide();
+        if (deathOverlay != null) deathOverlay.hide();
+    }
     @Override public void pause() {}
     @Override public void resume() {}
 
@@ -196,5 +221,6 @@ public class GameScreen implements Screen {
         world.dispose();
         debugRenderer.dispose();
         if (pauseOverlay != null) pauseOverlay.dispose();
+        if (deathOverlay != null) deathOverlay.dispose();
     }
 }
