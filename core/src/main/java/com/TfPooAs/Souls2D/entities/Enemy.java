@@ -68,7 +68,7 @@ public class Enemy extends Entity {
         fdef.density = 1f;
         fdef.friction = 0f; // sin fricción como el player
         fdef.filter.categoryBits = Constants.BIT_ENEMY;
-        fdef.filter.maskBits = Constants.BIT_GROUND | Constants.BIT_PLAYER;
+        fdef.filter.maskBits = Constants.BIT_GROUND;
 
         body.createFixture(fdef).setUserData("enemy");
         shape.dispose();

@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.TfPooAs.Souls2D.utils.Constants;
@@ -16,12 +17,15 @@ import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.TfPooAs.Souls2D.entities.Player;
+import com.TfPooAs.Souls2D.ui.HUD;
 
 public class GameScreen implements Screen {
 
     private final Main game;
     private OrthographicCamera camera;
     private FitViewport viewport;
+    private OrthographicCamera uiCamera;
+    private FitViewport uiViewport;
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
 
@@ -35,6 +39,7 @@ public class GameScreen implements Screen {
 
     private Player player;
     private Enemy enemy;
+    private HUD hud;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -43,6 +48,13 @@ public class GameScreen implements Screen {
             camera = new OrthographicCamera();
             viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
             viewport.apply();
+
+            // UI camera/viewport for screen-space HUD
+            uiCamera = new OrthographicCamera();
+            uiViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, uiCamera);
+            uiViewport.apply();
+            uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
+            uiCamera.update();
 
             batch = new SpriteBatch();
             debugRenderer = new Box2DDebugRenderer();
@@ -135,12 +147,15 @@ public class GameScreen implements Screen {
             System.out.println("Player creado: " + player.getPosition());
 
             // Crear enemy DESPUÉS del player
-            enemy = new Enemy(world, 400, 300, player);
+            enemy = new Enemy(world, 300, 300, player);
             System.out.println("Enemy creado: " + enemy.getPosition());
 
             // Registrar enemigo en el player para detección de golpes
             player.addEnemy(enemy);
             System.out.println("Enemy registrado en Player");
+
+            // Crear HUD después de instanciar el jugador
+            hud = new HUD(player);
 
             System.out.println("show() completado correctamente");
         } catch (Exception e) {
@@ -189,8 +204,16 @@ public class GameScreen implements Screen {
             }
             batch.end();
 
+            // Render HUD en espacio de pantalla
+            uiViewport.apply();
+            uiCamera.update();
+            if (hud != null) {
+                hud.render(uiCamera, batch);
+            }
+
             // Debug de colisiones
-            debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+            Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
+            debugRenderer.render(world, debugMatrix);
 
         } catch (Exception e) {
             System.err.println("Error en render(): " + e.getMessage());
@@ -201,6 +224,11 @@ public class GameScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        if (uiViewport != null) {
+            uiViewport.update(width, height, true);
+            uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
+            uiCamera.update();
+        }
     }
 
     @Override public void hide() {}
@@ -216,9 +244,10 @@ public class GameScreen implements Screen {
             if (world != null) world.dispose();
             if (debugRenderer != null) debugRenderer.dispose();
 
-            // Dispose de entidades
+            // Dispose de entidades y HUD
             if (player != null) player.dispose();
             if (enemy != null) enemy.dispose();
+            if (hud != null) hud.dispose();
 
             System.out.println("GameScreen disposed correctamente");
         } catch (Exception e) {

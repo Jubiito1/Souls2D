@@ -1,4 +1,6 @@
 .gitkeep
+caballeroAtaque-Sheet.png
+caballeroIdle-Sheet.png
 enemy.png
 enemy_attack.png
 maps/New Piskel.png
