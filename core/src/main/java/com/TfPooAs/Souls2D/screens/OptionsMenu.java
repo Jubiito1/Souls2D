@@ -50,6 +50,8 @@ public class OptionsMenu implements Screen {
         });
 
         TextButton back = new TextButton("Volver", skin);
+        back.getLabel().setFontScale(2.0f);
+
         back.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
                 game.gsm.restorePreviousScreen();
