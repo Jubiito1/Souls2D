@@ -51,6 +51,10 @@ public class PauseOverlay {
         TextButton options = new TextButton("Opciones", skin);
         TextButton quit = new TextButton("Salir al menú", skin);
 
+        resume.getLabel().setFontScale(2.0f);
+        options.getLabel().setFontScale(2.0f);
+        quit.getLabel().setFontScale(2.0f);
+
         // Resume: llama a método de GameScreen para despausar
         resume.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {

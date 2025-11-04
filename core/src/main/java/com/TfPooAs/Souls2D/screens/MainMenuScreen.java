@@ -51,6 +51,11 @@ public class MainMenuScreen implements Screen {
         TextButton options = new TextButton("Opciones", skin);
         TextButton exit = new TextButton("Salir", skin);
 
+        newGame.getLabel().setFontScale(2.0f);
+        cont.getLabel().setFontScale(2.0f);
+        options.getLabel().setFontScale(2.0f);
+        exit.getLabel().setFontScale(2.0f);
+
         // Ejemplo: deshabilitar Continuar si no hay save
         cont.setDisabled(true);
 
