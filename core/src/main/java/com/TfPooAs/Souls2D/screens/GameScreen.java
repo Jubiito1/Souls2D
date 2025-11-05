@@ -273,6 +273,7 @@ public class GameScreen implements Screen {
 
         // Debug opcional
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
+        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
 
 
         // Overlays primero (se dibujan sobre el juego)
