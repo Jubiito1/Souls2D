@@ -18,7 +18,7 @@ public class Player extends Entity {
     private World world;
 
     private float moveSpeed = 0.3f;
-    private float jumpForce = 1f;
+    private float jumpForce = 1.7f;
     private boolean isGrounded = true;
 
     // === Sistema de vida ===
