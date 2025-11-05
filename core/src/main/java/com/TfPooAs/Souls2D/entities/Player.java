@@ -18,6 +18,10 @@ public class Player extends Entity {
     // Estado de suelo (usado por el ContactListener en GameScreen)
     private boolean grounded = false;
 
+    // Congelamiento durante diálogos
+    private boolean frozen = false;
+    private float prevGravityScale = 1f;
+
     public Player(World world, float x, float y) {
         super(x, y, "player.png" );
         this.world = world;
@@ -50,6 +54,11 @@ public class Player extends Entity {
     public void update(float delta) {
         handleInput();
 
+        // Si está congelado, asegurar que no se mueva por física
+        if (frozen) {
+            body.setLinearVelocity(0, 0);
+        }
+
         // Sincronizar posición visual con física
         position.set(
             body.getPosition().x * Constants.PPM - width / 2,
@@ -58,6 +67,7 @@ public class Player extends Entity {
     }
 
     private void handleInput() {
+        if (frozen) return;
         Vector2 vel = body.getLinearVelocity();
 
         // Movimiento horizontal
@@ -104,5 +114,40 @@ public class Player extends Entity {
     // Exponer body si alguna lógica externa necesita accederlo (opcional)
     public Body getBody() {
         return body;
+    }
+
+    public void setFrozen(boolean frozen) {
+        if (this.frozen == frozen) return;
+        this.frozen = frozen;
+        if (body == null) return;
+        if (frozen) {
+            // Guardar y anular gravedad, detener movimiento
+            prevGravityScale = body.getGravityScale();
+            body.setLinearVelocity(0, 0);
+            body.setGravityScale(0);
+        } else {
+            // Restaurar gravedad
+            body.setGravityScale(prevGravityScale);
+        }
+    }
+
+    public boolean isFrozen() { return frozen; }
+
+    /**
+     * Teletransporta al jugador a una posición en PIXELES, reseteando su velocidad.
+     */
+    public void teleportToPixels(float x, float y) {
+        if (body == null) {
+            // Si no hay body, solo ajustamos la posición visual
+            this.position.set(x, y);
+            return;
+        }
+        // Convertir a metros para Box2D y mover el cuerpo al centro del sprite
+        float centerX = (x + width / 2f) / Constants.PPM;
+        float centerY = (y + height / 2f) / Constants.PPM;
+        body.setTransform(centerX, centerY, body.getAngle());
+        body.setLinearVelocity(0, 0);
+        // Actualizar inmediatamente la posición visual en píxeles
+        this.position.set(x, y);
     }
 }
