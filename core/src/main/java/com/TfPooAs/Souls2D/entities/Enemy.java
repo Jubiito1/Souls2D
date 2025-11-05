@@ -31,7 +31,7 @@ public class Enemy extends Entity {
 
     // === Sistema de IA y detección ===
     private final float DETECTION_RANGE = 200f; // rango de detección en píxeles
-    private final float ATTACK_RANGE = 80f; // rango de ataque en píxeles
+    private final float ATTACK_RANGE = 60f; // rango de ataque en píxeles
     private boolean playerDetected = false;
     private boolean facingRight = true;
 
@@ -153,7 +153,7 @@ public class Enemy extends Entity {
 
             // Movimiento horizontal con control de velocidad
             float targetVelX = direction * MOVE_SPEED;
-            body.setLinearVelocity(targetVelX=0, vel.y);
+            body.setLinearVelocity(targetVelX, vel.y);
 
             // Intentar saltar si el jugador está más alto y hay obstáculos
             boolean shouldJump = shouldJumpToReachPlayer(playerPos);
@@ -207,7 +207,7 @@ public class Enemy extends Entity {
         // Dash hacia el jugador (más controlado)
         Vector2 playerPos = player.getPosition();
         float direction = playerPos.x > position.x ? 1 : -1;
-        body.setLinearVelocity(0, body.getLinearVelocity().y);
+        body.setLinearVelocity(direction * ATTACK_FORCE, body.getLinearVelocity().y);
 
         System.out.println("¡Enemigo atacando!");
     }

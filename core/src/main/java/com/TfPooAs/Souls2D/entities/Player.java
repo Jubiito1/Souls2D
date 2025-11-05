@@ -50,6 +50,12 @@ public class Player extends Entity {
     // Ventana de impacto del ataque (porcentaje del tiempo total)
     private boolean hasDealtDamageThisAttack = false;
 
+    // Desplazamiento hacia delante durante el ataque (tunable)
+    // Velocidad horizontal aplicada al iniciar el ataque (en unidades Box2D)
+    private float attackLungeSpeed = 1f;
+    // Duración en segundos durante la cual se mantiene ese empuje
+    private float attackLungeDuration = 0.22f;
+
     // === Animaciones ===
     private Animation<TextureRegion> idleAnim;
     private Animation<TextureRegion> attackAnim;
@@ -270,18 +276,18 @@ public class Player extends Entity {
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                 body.setLinearVelocity(vel.x - speed, vel.y);
                 facingRight = false;
-                if (vel.x < -2) {
+                if (vel.x < -1.5) {
                     moveSpeed = 0;
                 } else {
-                    moveSpeed = 0.3f;
+                    moveSpeed = 0.1f;
                 }
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 body.setLinearVelocity(vel.x + speed, vel.y);
                 facingRight = true;
-                if (vel.x > 2) {
+                if (vel.x > 1.5) {
                     moveSpeed = 0;
                 } else {
-                    moveSpeed = 0.3f;
+                    moveSpeed = 0.1f;
                 }
             } else if (Math.abs(vel.y) < 0.01f) {
                 body.setLinearVelocity(0, vel.y);
@@ -313,6 +319,17 @@ public class Player extends Entity {
         if (isAttacking) {
             attackTimer += delta;
             float duration = (attackAnim != null) ? attackAnim.getAnimationDuration() : ATTACK_DURATION;
+
+            // Empuje hacia delante durante la ventana inicial configurable
+            float lungeTime = attackLungeDuration;
+            Vector2 vel = body.getLinearVelocity();
+            float dir = facingRight ? 1f : -1f;
+            if (attackTimer <= lungeTime) {
+                body.setLinearVelocity(dir * attackLungeSpeed, vel.y);
+            } else {
+                // Tras el lunge, bloquear la velocidad X para evitar deslizamiento
+                body.setLinearVelocity(0f, vel.y);
+            }
 
             // Aplicar daño al INICIO de la animación (ventana temprana)
             float progress = attackTimer / duration;
@@ -418,9 +435,11 @@ public class Player extends Entity {
         attackTimer = 0f;
         hasDealtDamageThisAttack = false;
 
-        // Detener movimiento horizontal durante el ataque
+        // Aplicar un "lunge" (empuje hacia delante) al iniciar el ataque
         Vector2 vel = body.getLinearVelocity();
-        body.setLinearVelocity(0, vel.y);
+        float dir = facingRight ? 1f : -1f;
+        // Establecemos velocidad horizontal hacia delante por un corto periodo
+        body.setLinearVelocity(dir * attackLungeSpeed, vel.y);
 
         System.out.println("¡Atacando!");
     }
@@ -587,6 +606,17 @@ public class Player extends Entity {
     public Body getBody() {
         return body;
     }
+
+    // === Configuración del lunge de ataque ===
+    public void setAttackLungeSpeed(float speed) {
+        this.attackLungeSpeed = speed;
+    }
+    public float getAttackLungeSpeed() { return attackLungeSpeed; }
+
+    public void setAttackLungeDuration(float seconds) {
+        this.attackLungeDuration = Math.max(0f, seconds);
+    }
+    public float getAttackLungeDuration() { return attackLungeDuration; }
 
     @Override
     public void dispose() {
