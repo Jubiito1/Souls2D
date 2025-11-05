@@ -4,6 +4,8 @@ import com.TfPooAs.Souls2D.core.Main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -32,14 +34,37 @@ public class PauseOverlay {
     private float headerHeight = 375f; // ajustá si querés
     private float headerTopMargin = 30f; // margen desde el borde superior
 
+    // Fuente personalizada
+    private BitmapFont garamondFont;
+
     public PauseOverlay(Main game, GameScreen gameScreen) {
         this.gameScreen = gameScreen;
         stage = new Stage(new ScreenViewport());
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json")); // requiere core/assets/ui/uiskin.json
+        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         dimTexture = create1x1Texture();
-
+        generateFont(); // genera garamondFont
         buildUI();
         loadHeader();          // carga y posiciona el header
+    }
+
+    /**
+     * Genera el BitmapFont a partir del OTF. Ajustá el tamaño (parameter.size)
+     * según lo que necesites para que los botones se vean bien.
+     */
+    private void generateFont() {
+        try {
+            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
+            FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            parameter.size = 32;          // --> ajustá este tamaño
+            parameter.spaceX = 0;
+            parameter.spaceY = 0;
+            // parameter.borderWidth = 0; // si querés borde, configuralo
+            garamondFont = generator.generateFont(parameter);
+            generator.dispose();
+        } catch (Exception e) {
+            Gdx.app.error("PauseOverlay", "No se pudo generar la fuente AdobeGaramond-Bold.otf: " + e.getMessage());
+            garamondFont = new BitmapFont(); // fallback
+        }
     }
 
     private void buildUI() {
@@ -47,13 +72,27 @@ public class PauseOverlay {
         t.setFillParent(true);
         t.center();
 
-        TextButton resume = new TextButton("Continuar", skin);
-        TextButton options = new TextButton("Opciones", skin);
-        TextButton quit = new TextButton("Salir al menú", skin);
+        // obtenemos el estilo por defecto del skin y clonamos sus drawables,
+        // asignándole nuestra fuente al nuevo style.
+        TextButton.TextButtonStyle baseStyle = skin.get(TextButton.TextButtonStyle.class);
+        TextButton.TextButtonStyle btnStyle = new TextButton.TextButtonStyle();
+        btnStyle.up = baseStyle.up;
+        btnStyle.down = baseStyle.down;
+        btnStyle.checked = baseStyle.checked;
+        btnStyle.over = baseStyle.over;
+        btnStyle.disabled = baseStyle.disabled;
+        btnStyle.font = garamondFont;
+        // si el baseStyle usa fontColor, se puede copiar:
+        btnStyle.fontColor = baseStyle.fontColor;
 
-        resume.getLabel().setFontScale(2.0f);
-        options.getLabel().setFontScale(2.0f);
-        quit.getLabel().setFontScale(2.0f);
+        TextButton resume = new TextButton("Continuar", btnStyle);
+        TextButton options = new TextButton("Opciones", btnStyle);
+        TextButton quit = new TextButton("Salir al menú", btnStyle);
+
+        // Si antes escalabas con setFontScale(2f), ahora en general no hace falta
+        // porque elegimos el tamaño correcto al generar la fuente. Si necesitás
+        // escalar adicionalmente, podes volver a usar setFontScale().
+        // resume.getLabel().setFontScale(2.0f);
 
         // Resume: llama a método de GameScreen para despausar
         resume.addListener(new ChangeListener() {
@@ -151,6 +190,7 @@ public class PauseOverlay {
         skin.dispose();
         dimTexture.dispose();
         if (headerTexture != null) headerTexture.dispose();
+        if (garamondFont != null) garamondFont.dispose();
     }
 
     private Texture create1x1Texture() {
