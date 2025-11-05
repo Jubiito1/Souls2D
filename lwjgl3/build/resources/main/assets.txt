@@ -3,7 +3,9 @@ backgrounds/mountains.png
 backgrounds/sky.png
 backgrounds/trees.png
 caballeroAtaque-Sheet.png
+caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png
+caballeroWalk-Sheet.png
 enemy.png
 enemy_attack.png
 maps/cemetery.tmx

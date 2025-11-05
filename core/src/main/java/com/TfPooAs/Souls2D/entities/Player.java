@@ -53,9 +53,13 @@ public class Player extends Entity {
     // === Animaciones ===
     private Animation<TextureRegion> idleAnim;
     private Animation<TextureRegion> attackAnim;
+    private Animation<TextureRegion> walkAnim;
+    private Animation<TextureRegion> healAnim;
     private float stateTime = 0f;
     private Texture idleSheetTexture; // solo si cargamos spritesheet
     private Texture attackSheetTexture; // solo si cargamos spritesheet
+    private Texture walkSheetTexture;
+    private Texture healSheetTexture;
 
     // === Curación con Estus ===
     private estus estus = new estus();
@@ -104,6 +108,25 @@ public class Player extends Entity {
                 this.height = firstA.getRegionHeight();
             }
         }
+        // Caminata
+        AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
+                "caballeroWalk-Sheet.png", 8, 1, 0.10f, Animation.PlayMode.LOOP);
+        if (walkPair != null) {
+            this.walkAnim = walkPair.animation;
+            this.walkSheetTexture = walkPair.texture;
+            if (this.idleAnim == null && this.attackAnim == null) {
+                TextureRegion firstW = walkAnim.getKeyFrame(0f);
+                this.width = firstW.getRegionWidth();
+                this.height = firstW.getRegionHeight();
+            }
+        }
+        // Estus (curación)
+        AnimationUtils.AnimWithTexture healPair = AnimationUtils.createFromSpritesheetIfExists(
+                "caballeroEstus-Sheet.png", 20, 1, 0.10f, Animation.PlayMode.NORMAL);
+        if (healPair != null) {
+            this.healAnim = healPair.animation;
+            this.healSheetTexture = healPair.texture;
+        }
 
         createBody(x, y);
     }
@@ -119,8 +142,10 @@ public class Player extends Entity {
     }
 
     private Fixture currentFixture;
-    private float originalHalfWidth;
-    private float originalHalfHeight;
+    // Hitbox base (en metros, Box2D). Personalizable mediante setters
+    private float originalHalfWidth;   // half-width en metros
+    private float originalHalfHeight;  // half-height en metros
+    private float baseYOffset;         // offset vertical del centro en metros (positivo = hacia arriba)
 
     private void createBody(float x, float y) {
         BodyDef bdef = new BodyDef();
@@ -129,9 +154,11 @@ public class Player extends Entity {
         bdef.fixedRotation = true;
         body = world.createBody(bdef);
 
-        originalHalfWidth = (width / 2f) / Constants.PPM;
+        // Por defecto, la hitbox coincide con el sprite; puede ser personalizada vía setters
+        originalHalfWidth = (width / 3f) / Constants.PPM;
         originalHalfHeight = (height / 2f) / Constants.PPM;
-        currentFixture = createPlayerFixture(originalHalfWidth, originalHalfHeight, 0f);
+        baseYOffset = 0f;
+        currentFixture = createPlayerFixture(originalHalfWidth, originalHalfHeight, baseYOffset);
     }
 
     private Fixture createPlayerFixture(float halfW, float halfH, float yOffset) {
@@ -149,6 +176,42 @@ public class Player extends Entity {
         fx.setUserData("player");
         shape.dispose();
         return fx;
+    }
+
+    // Recrea la fixture según el estado actual (normal o rodando) usando la hitbox base configurable
+    private void recreateFixtureForCurrentState() {
+        if (body == null) return;
+        if (currentFixture != null) {
+            body.destroyFixture(currentFixture);
+            currentFixture = null;
+        }
+        float halfW = originalHalfWidth;
+        float halfH = originalHalfHeight;
+        float yOffset = baseYOffset;
+        if (isRolling) {
+            float newHalfH = originalHalfHeight * 0.5f;
+            float deltaH = originalHalfHeight - newHalfH; // lo que se "agacha"
+            halfH = newHalfH;
+            yOffset = baseYOffset - deltaH; // bajar el centro para conservar los pies en la misma altura
+        }
+        currentFixture = createPlayerFixture(halfW, halfH, yOffset);
+    }
+
+    // === API pública para configurar la hitbox en píxeles ===
+    public void setHitboxSizePixels(float widthPx, float heightPx) {
+        setHitboxPixels(widthPx, heightPx, baseYOffset * Constants.PPM);
+    }
+
+    public void setHitboxOffsetPixels(float yOffsetPx) {
+        setHitboxPixels(originalHalfWidth * 2 * Constants.PPM, originalHalfHeight * 2 * Constants.PPM, yOffsetPx);
+    }
+
+    public void setHitboxPixels(float widthPx, float heightPx, float yOffsetPx) {
+        if (widthPx <= 0 || heightPx <= 0) return;
+        this.originalHalfWidth = (widthPx / 2f) / Constants.PPM;
+        this.originalHalfHeight = (heightPx / 2f) / Constants.PPM;
+        this.baseYOffset = (yOffsetPx) / Constants.PPM;
+        recreateFixtureForCurrentState();
     }
 
     public void update(float delta) {
@@ -195,13 +258,14 @@ public class Player extends Entity {
 
         // Usar Estus con Q
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
-            if (!isAttacking && !isHealing && !isRolling && currentHealth < maxHealth) {
+            if (!isAttacking && !isRolling && currentHealth < maxHealth) {
                 estus.use(this);
+                isHealing = true;
             }
         }
 
         // Movimiento horizontal: se permite durante curación pero más lento; bloqueado si atacando o rodando
-        if (!isAttacking && !isRolling) {
+        if (!isAttacking && !isRolling && !isHealing) {
             float speed = isHealing ? moveSpeed * 0.5f : moveSpeed;
             if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                 body.setLinearVelocity(vel.x - speed, vel.y);
@@ -225,7 +289,7 @@ public class Player extends Entity {
         }
 
         // Saltar solo si la velocidad Y es casi 0 (suelo) y no está atacando ni rodando
-        if (!isAttacking && !isRolling && Gdx.input.isKeyJustPressed(Input.Keys.W) && Math.abs(vel.y) < 0.01f) {
+        if (!isAttacking && !isRolling && !isHealing && Gdx.input.isKeyJustPressed(Input.Keys.W) && Math.abs(vel.y) < 0.01f) {
             if (canSpendPercent(STAM_COST_JUMP)) {
                 spendStaminaPercent(STAM_COST_JUMP);
                 body.applyLinearImpulse(new Vector2(0, jumpForce), body.getWorldCenter(), true);
@@ -274,12 +338,7 @@ public class Player extends Entity {
         body.setLinearVelocity(dir * ROLL_SPEED, vel.y);
 
         // Reducir hitbox a la mitad de alto manteniendo los pies a la misma altura.
-        if (currentFixture != null) {
-            body.destroyFixture(currentFixture);
-        }
-        float newHalfH = originalHalfHeight * 0.5f;
-        float yOffset = -(originalHalfHeight - newHalfH); // bajar el centro para conservar la base
-        currentFixture = createPlayerFixture(originalHalfWidth, newHalfH, yOffset);
+        recreateFixtureForCurrentState();
     }
 
     private void updateRoll(float delta) {
@@ -300,11 +359,8 @@ public class Player extends Entity {
         isRolling = false;
         rollTimer = 0f;
 
-        // Restaurar hitbox original
-        if (currentFixture != null) {
-            body.destroyFixture(currentFixture);
-        }
-        currentFixture = createPlayerFixture(originalHalfWidth, originalHalfHeight, 0f);
+        // Restaurar hitbox base configurada
+        recreateFixtureForCurrentState();
     }
 
     // === Stamina ===
@@ -345,7 +401,8 @@ public class Player extends Entity {
     private void updateHealing(float delta) {
         if (!isHealing) return;
         healingTimer += delta;
-        if (healingTimer >= HEAL_DURATION) {
+        float duration = (healAnim != null) ? healAnim.getAnimationDuration() : HEAL_DURATION;
+        if (healingTimer >= duration) {
             endHealing();
         }
     }
@@ -412,16 +469,25 @@ public class Player extends Entity {
             return;
         }
         if (isHealing) {
-            Texture tex = healTexture != null ? healTexture : texture;
-            if (facingRight) {
-                batch.draw(tex, position.x, position.y, width, height);
+            if (healAnim != null) {
+                TextureRegion frame = healAnim.getKeyFrame(healingTimer);
+                if (facingRight) {
+                    batch.draw(frame, position.x, position.y, width, height);
+                } else {
+                    batch.draw(frame, position.x + width, position.y, -width, height);
+                }
             } else {
-                batch.draw(tex, position.x + width, position.y, -width, height);
+                Texture tex = healTexture != null ? healTexture : texture;
+                if (facingRight) {
+                    batch.draw(tex, position.x, position.y, width, height);
+                } else {
+                    batch.draw(tex, position.x + width, position.y, -width, height);
+                }
             }
             return;
         }
 
-        // Elegir frame según estado (ataque o idle)
+        // Elegir frame según estado (ataque, caminar o idle)
         if (isAttacking && attackAnim != null) {
             TextureRegion frame = attackAnim.getKeyFrame(attackTimer);
             if (facingRight) {
@@ -429,21 +495,31 @@ public class Player extends Entity {
             } else {
                 batch.draw(frame, position.x + width, position.y, -width, height);
             }
-        } else if (idleAnim != null) {
-            TextureRegion frame = idleAnim.getKeyFrame(stateTime);
-            if (facingRight) {
-                batch.draw(frame, position.x, position.y, width, height);
-            } else {
-                batch.draw(frame, position.x + width, position.y, -width, height);
-            }
         } else {
-            // Fallback a texturas estáticas
-            Texture tex;
-            if (isAttacking) tex = attackTexture; else tex = texture;
-            if (facingRight) {
-                batch.draw(tex, position.x, position.y, width, height);
+            boolean moving = Math.abs(body.getLinearVelocity().x) > 0.05f;
+            if (moving && walkAnim != null) {
+                TextureRegion frame = walkAnim.getKeyFrame(stateTime);
+                if (facingRight) {
+                    batch.draw(frame, position.x, position.y, width, height);
+                } else {
+                    batch.draw(frame, position.x + width, position.y, -width, height);
+                }
+            } else if (idleAnim != null) {
+                TextureRegion frame = idleAnim.getKeyFrame(stateTime);
+                if (facingRight) {
+                    batch.draw(frame, position.x, position.y, width, height);
+                } else {
+                    batch.draw(frame, position.x + width, position.y, -width, height);
+                }
             } else {
-                batch.draw(tex, position.x + width, position.y, -width, height);
+                // Fallback a texturas estáticas
+                Texture tex;
+                if (isAttacking) tex = attackTexture; else tex = texture;
+                if (facingRight) {
+                    batch.draw(tex, position.x, position.y, width, height);
+                } else {
+                    batch.draw(tex, position.x + width, position.y, -width, height);
+                }
             }
         }
     }
@@ -520,6 +596,12 @@ public class Player extends Entity {
         }
         if (attackSheetTexture != null) {
             attackSheetTexture.dispose();
+        }
+        if (walkSheetTexture != null) {
+            walkSheetTexture.dispose();
+        }
+        if (healSheetTexture != null) {
+            healSheetTexture.dispose();
         }
     }
 }

@@ -60,6 +60,9 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
         viewport.apply();
+        // Acercar la cámara al jugador (zoom in)
+        camera.zoom = 0.5f; // menor a 1 = más cerca
+        camera.update();
 
         // UI camera/viewport para dibujar HUD en coordenadas de pantalla
         uiCamera = new OrthographicCamera();
@@ -146,12 +149,10 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        // --- Input para overlays ---
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.H)) {
-            if (!isDeathShown) {
-                isDeathShown = true;
-                if (deathOverlay != null) deathOverlay.show();
-            }
+        // --- Trigger automático de DeathOverlay cuando el jugador muere ---
+        if (!isDeathShown && player != null && player.isDead()) {
+            isDeathShown = true;
+            if (deathOverlay != null) deathOverlay.show();
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
@@ -170,7 +171,9 @@ public class GameScreen implements Screen {
 
         // --- Actualizar cámara ---
         if (player != null) {
-            camera.position.set(player.getPosition().x, player.getPosition().y, 0);
+            float cx = player.getPosition().x + player.getWidth() / 2f;
+            float cy = player.getPosition().y + player.getHeight() / 2f;
+            camera.position.set(cx, cy, 0);
             camera.update();
         }
 
@@ -196,7 +199,7 @@ public class GameScreen implements Screen {
 
         // Debug opcional
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
-        debugRenderer.render(world, debugMatrix);
+
 
         // Render HUD en espacio de pantalla (usa uiViewport/uiCamera)
         uiViewport.apply();
