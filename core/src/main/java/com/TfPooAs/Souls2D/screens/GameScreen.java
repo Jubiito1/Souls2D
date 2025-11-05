@@ -25,7 +25,7 @@ import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.TfPooAs.Souls2D.entities.Player;
 import com.TfPooAs.Souls2D.entities.items.Bonfire;
 import com.TfPooAs.Souls2D.entities.npcs.FireKeeper;
-import com.TfPooAs.Souls2D.world.ParallaxBackground;
+import com.TfPooAs.Souls2D.world.Background;
 import com.TfPooAs.Souls2D.systems.SaveSystem;
 import com.TfPooAs.Souls2D.ui.HUD;
 
@@ -43,7 +43,7 @@ public class GameScreen implements Screen {
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
 
-    private ParallaxBackground parallax;
+    private Background parallax;
     // Entities loaded from Tiled
     private java.util.ArrayList<Bonfire> bonfires = new java.util.ArrayList<>();
     private java.util.ArrayList<FireKeeper> fireKeepers = new java.util.ArrayList<>();
@@ -144,14 +144,12 @@ public class GameScreen implements Screen {
         });
 
         // --- Fondo Parallax ---
-        Texture sky = new Texture("backgrounds/sky.png");
-        Texture mountains = new Texture("backgrounds/mountains.png");
-        Texture trees = new Texture("backgrounds/trees.png");
+        Texture fondo = new Texture("backgrounds/fondo.png");
 
-        Texture[] layers = { sky, mountains, trees };
-        float[] speeds = { 0.1f, 0.3f, 0.6f }; // Menor = más lejos, Mayor = más cercano
+        Texture[] layers = { fondo };
+        float[] speeds = { 1f }; // Menor = más lejos, Mayor = más cercano
 
-        parallax = new ParallaxBackground(layers, speeds, camera);
+        parallax = new Background(layers, speeds, camera);
     }
 
     private void loadBonfiresFromMap() {

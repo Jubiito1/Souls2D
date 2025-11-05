@@ -1,7 +1,5 @@
 .gitkeep
-backgrounds/mountains.png
-backgrounds/sky.png
-backgrounds/trees.png
+backgrounds/fondo.png
 caballeroAtaque-Sheet.png
 caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png
