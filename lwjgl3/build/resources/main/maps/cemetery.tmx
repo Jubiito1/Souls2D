@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="284" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="457">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="284" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="454">
  <tileset firstgid="1" source="tilemapeardo.tsx"/>
  <tileset firstgid="226" source="tilemapeardo2.tsx"/>
  <layer id="3" name="Capa de patrones 2" width="284" height="30">
@@ -589,10 +589,5 @@
   <object id="453" x="8942.84" y="449.183">
    <polygon points="0,0 -13.0568,8.75 -0.0909091,8.71133"/>
   </object>
- </objectgroup>
- <objectgroup id="7" name="Bonfires">
-  <object id="454" x="320" y="760" width="32" height="32"/>
-  <object id="455" x="1600" y="512" width="32" height="32"/>
-  <object id="456" x="2208" y="744" width="32" height="32"/>
  </objectgroup>
 </map>
