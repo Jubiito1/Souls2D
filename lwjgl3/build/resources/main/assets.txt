@@ -8,6 +8,7 @@ caballeroIdle-Sheet.png
 caballeroWalk-Sheet.png
 enemy.png
 enemy_attack.png
+hoguera.png
 maps/cemetery.tmx
 maps/tilemapeardo.png
 maps/tilemapeardo.tsx
