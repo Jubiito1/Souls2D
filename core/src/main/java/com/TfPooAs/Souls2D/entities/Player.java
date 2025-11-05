@@ -18,7 +18,7 @@ public class Player extends Entity {
     private World world;
 
     private float moveSpeed = 0.01f;
-    private float jumpForce = 1.5f;
+    private float jumpForce = 1f;
     private boolean isGrounded = true;
 
     // === Sistema de vida ===
@@ -45,8 +45,8 @@ public class Player extends Entity {
     private float attackTimer = 0f;
     private final float ATTACK_DURATION = 0.3f;
     private boolean facingRight = true;
-    private final float ATTACK_RANGE = 35f; // rango de ataque en píxeles
-    private final int ATTACK_DAMAGE = 25; // daño que hace a enemigos
+    private final float ATTACK_RANGE = 60f; // rango de ataque en píxeles
+    private final int ATTACK_DAMAGE = 5; // daño que hace a enemigos
     // Ventana de impacto del ataque (porcentaje del tiempo total)
     private boolean hasDealtDamageThisAttack = false;
 
@@ -155,7 +155,7 @@ public class Player extends Entity {
         body = world.createBody(bdef);
 
         // Por defecto, la hitbox coincide con el sprite; puede ser personalizada vía setters
-        originalHalfWidth = (width / 3f) / Constants.PPM;
+        originalHalfWidth = (width / 5f) / Constants.PPM;
         originalHalfHeight = (height / 2f) / Constants.PPM;
         baseYOffset = 0f;
         currentFixture = createPlayerFixture(originalHalfWidth, originalHalfHeight, baseYOffset);

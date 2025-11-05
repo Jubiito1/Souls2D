@@ -153,7 +153,7 @@ public class Enemy extends Entity {
 
             // Movimiento horizontal con control de velocidad
             float targetVelX = direction * MOVE_SPEED;
-            body.setLinearVelocity(targetVelX, vel.y);
+            body.setLinearVelocity(targetVelX=0, vel.y);
 
             // Intentar saltar si el jugador está más alto y hay obstáculos
             boolean shouldJump = shouldJumpToReachPlayer(playerPos);
@@ -207,7 +207,7 @@ public class Enemy extends Entity {
         // Dash hacia el jugador (más controlado)
         Vector2 playerPos = player.getPosition();
         float direction = playerPos.x > position.x ? 1 : -1;
-        body.setLinearVelocity(direction * ATTACK_FORCE, body.getLinearVelocity().y);
+        body.setLinearVelocity(0, body.getLinearVelocity().y);
 
         System.out.println("¡Enemigo atacando!");
     }
