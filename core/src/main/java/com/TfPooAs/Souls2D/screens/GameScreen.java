@@ -16,6 +16,10 @@ import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.TfPooAs.Souls2D.entities.Player;
 
+import com.TfPooAs.Souls2D.world.ParallaxBackground;
+
+import com.badlogic.gdx.graphics.Texture;
+
 public class GameScreen implements Screen {
 
     private final Main game;
@@ -23,6 +27,8 @@ public class GameScreen implements Screen {
     private FitViewport viewport;
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
+
+    private ParallaxBackground parallax;
 
     private final int VIRTUAL_WIDTH = 1920;
     private final int VIRTUAL_HEIGHT = 1080;
@@ -87,6 +93,19 @@ public class GameScreen implements Screen {
 
             @Override public void preSolve(Contact contact, Manifold oldManifold) {}
             @Override public void postSolve(Contact contact, ContactImpulse impulse) {}
+
+            // --- Fondo Parallax ---
+            Texture sky = new Texture("backgrounds/sky.png");
+            Texture mountains = new Texture("backgrounds/mountains.png");
+            Texture trees = new Texture("backgrounds/trees.png");
+
+            // Array de capas
+            Texture[] layers = { sky, mountains, trees };
+
+            // Factores de velocidad (más chico = más lejos)
+            float[] speeds = { 0.1f, 0.3f, 0.6f }; // ajustá según tu gusto
+
+            parallax = new ParallaxBackground(layers, speeds, camera);
         });
     }
 
