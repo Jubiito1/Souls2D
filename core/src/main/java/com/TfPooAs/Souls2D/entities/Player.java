@@ -32,7 +32,7 @@ public class Player extends Entity {
 
         // Cuerpo principal
         PolygonShape shape = new PolygonShape();
-        shape.setAsBox(width / 2 / Constants.PPM, height / 2 / Constants.PPM);
+        shape.setAsBox(width / 3 / Constants.PPM, height / 3 / Constants.PPM);
 
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
