@@ -108,7 +108,7 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         // Activar overlay de muerte para pruebas con tecla D (solo si no está ya mostrado)
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.D)) {
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.H)) {
             if (!isDeathShown) {
                 isDeathShown = true;
                 if (deathOverlay != null) deathOverlay.show();
