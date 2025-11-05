@@ -102,10 +102,16 @@ public class PauseOverlay {
         TextButton options = new TextButton("Opciones", btnStyle);
         TextButton quit = new TextButton("Salir al menú", btnStyle);
 
+        // Si antes escalabas con setFontScale(2f), ahora en general no hace falta
+        // porque elegimos el tamaño correcto al generar la fuente. Si necesitás
+        // escalar adicionalmente, podes volver a usar setFontScale().
+        // resume.getLabel().setFontScale(2.0f);
+
+        // Resume: llama a método de GameScreen para despausar y teletransportar al último guardado si existe
         // Listeners
         resume.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                gameScreen.resumeFromPause();
+                gameScreen.resumeFromPauseToLastSave();
             }
         });
 
