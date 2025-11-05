@@ -10,6 +10,7 @@ caballeroRoll-Sheet.png
 caballeroWalk-Sheet.png
 enemy.png
 enemy_attack.png
+estus.png
 hoguera.png
 maps/cemetery.tmx
 maps/tilemapeardo.png

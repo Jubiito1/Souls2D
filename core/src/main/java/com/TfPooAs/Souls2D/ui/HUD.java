@@ -1,7 +1,9 @@
 package com.TfPooAs.Souls2D.ui;
 
 import com.TfPooAs.Souls2D.entities.Player;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -13,6 +15,8 @@ public class HUD {
     private final ShapeRenderer shapes;
     private final BitmapFont font;
     private final GlyphLayout layout = new GlyphLayout();
+    // Icono Estus
+    private Texture estusIcon;
 
     // Layout constants (en píxeles de pantalla para 1920x1080 virtual)
     private static final float MARGEN = 30f;
@@ -35,6 +39,12 @@ public class HUD {
         this.font = new BitmapFont();
         this.font.setUseIntegerPositions(false);
         this.font.setColor(Color.WHITE);
+        // Cargar icono de Estus
+        try {
+            this.estusIcon = new Texture(Gdx.files.internal("estus.png"));
+        } catch (Exception e) {
+            this.estusIcon = null;
+        }
     }
 
     public void render(OrthographicCamera uiCamera, SpriteBatch uiBatch) {
@@ -95,22 +105,41 @@ public class HUD {
         shapes.setColor(new Color(0.15f, 0.15f, 0.15f, 1f));
         shapes.rect(estusX - 4, estusY - 4, TAM_ESTUS + 8, TAM_ESTUS + 8);
 
-        // Cuadrado del Estus (cambia si no hay cargas)
-        if (cargas > 0) {
-            // Ámbar (tipo estus encendido)
-            shapes.setColor(new Color(1.0f, 0.62f, 0.12f, 1f));
+        // Cuadrado del Estus o icono
+        if (estusIcon == null) {
+            if (cargas > 0) {
+                // Ámbar (tipo estus encendido)
+                shapes.setColor(new Color(1.0f, 0.62f, 0.12f, 1f));
+            } else {
+                // Gris apagado
+                shapes.setColor(new Color(0.35f, 0.35f, 0.35f, 1f));
+            }
+            shapes.rect(estusX, estusY, TAM_ESTUS, TAM_ESTUS);
+            shapes.end();
         } else {
-            // Gris apagado
-            shapes.setColor(new Color(0.35f, 0.35f, 0.35f, 1f));
+            // Terminar shapes antes de dibujar con batch
+            shapes.end();
         }
-        shapes.rect(estusX, estusY, TAM_ESTUS, TAM_ESTUS);
-        shapes.end();
 
-        // Dibujar textos con el batch de UI
+        // Dibujar icono/ textos con el batch de UI
         uiBatch.setProjectionMatrix(uiCamera.combined);
         // Aseguramos que el batch no herede tintes previos
         uiBatch.setColor(Color.WHITE);
         uiBatch.begin();
+
+        // Icono de Estus si existe
+        if (estusIcon != null) {
+            if (cargas > 0) {
+                uiBatch.setColor(Color.WHITE);
+            } else {
+                // tintar gris para indicar sin cargas
+                uiBatch.setColor(new Color(0.5f, 0.5f, 0.5f, 1f));
+            }
+            uiBatch.draw(estusIcon, estusX, estusY, TAM_ESTUS, TAM_ESTUS);
+            // resetear color tras dibujar el icono
+            uiBatch.setColor(Color.WHITE);
+        }
+
         // Texto de vida (opcional)
         font.setColor(0.9f, 0.9f, 0.9f, 0.85f);
         font.draw(uiBatch, "Vida: " + player.getCurrentHealth() + "/" + player.getMaxHealth(), hpX + 10f, hpY + ALTO_BARRA_VIDA - 6f);
@@ -130,5 +159,8 @@ public class HUD {
     public void dispose() {
         shapes.dispose();
         font.dispose();
+        if (estusIcon != null) {
+            estusIcon.dispose();
+        }
     }
 }

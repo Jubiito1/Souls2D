@@ -108,6 +108,7 @@ public class LevelLoader {
         }
     }
 
+
     public TiledMap getMap() {
         return map;
     }
