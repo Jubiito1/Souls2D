@@ -1,6 +1,5 @@
 package com.TfPooAs.Souls2D.screens;
 
-import com.TfPooAs.Souls2D.entities.Enemy;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -11,12 +10,15 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.TfPooAs.Souls2D.utils.Constants;
+import com.badlogic.gdx.graphics.Texture;
+import com.TfPooAs.Souls2D.entities.Enemy;
 
+import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.TfPooAs.Souls2D.entities.Player;
+import com.TfPooAs.Souls2D.world.ParallaxBackground;
 import com.TfPooAs.Souls2D.ui.HUD;
 
 public class GameScreen implements Screen {
@@ -24,10 +26,15 @@ public class GameScreen implements Screen {
     private final Main game;
     private OrthographicCamera camera;
     private FitViewport viewport;
+
+    // Cámara/viewport para UI (HUD)
     private OrthographicCamera uiCamera;
     private FitViewport uiViewport;
+
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
+
+    private ParallaxBackground parallax;
 
     private final int VIRTUAL_WIDTH = 1920;
     private final int VIRTUAL_HEIGHT = 1080;
@@ -41,218 +48,214 @@ public class GameScreen implements Screen {
     private Enemy enemy;
     private HUD hud;
 
+    // Overlays
+    private PauseOverlay pauseOverlay;
+    private boolean isPaused = false;
+    private DeathOverlay deathOverlay;
+    private boolean isDeathShown = false;
+
     public GameScreen(Main game) {
         this.game = game;
 
-        try {
-            camera = new OrthographicCamera();
-            viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
-            viewport.apply();
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
+        viewport.apply();
 
-            // UI camera/viewport for screen-space HUD
-            uiCamera = new OrthographicCamera();
-            uiViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, uiCamera);
-            uiViewport.apply();
-            uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
-            uiCamera.update();
+        // UI camera/viewport para dibujar HUD en coordenadas de pantalla
+        uiCamera = new OrthographicCamera();
+        uiViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, uiCamera);
+        uiViewport.apply();
+        uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
+        uiCamera.update();
 
-            batch = new SpriteBatch();
-            debugRenderer = new Box2DDebugRenderer();
+        batch = new SpriteBatch();
+        debugRenderer = new Box2DDebugRenderer();
 
-            // Crear mundo Box2D PRIMERO
-            world = new World(new Vector2(0, -9.8f), true);
-            System.out.println("Mundo Box2D creado correctamente");
+        // Crear mundo Box2D
+        world = new World(new Vector2(0, -9.8f), true);
 
-            // Cargar mapa y colisiones
-            levelLoader = new LevelLoader(world, "maps/cemetery.tmx");
-            tileMapRenderer = new TileMapRenderer(levelLoader.getMap());
-            System.out.println("Mapa cargado correctamente");
+        // Cargar mapa y colisiones
+        levelLoader = new LevelLoader(world, "maps/cemetery.tmx");
+        tileMapRenderer = new TileMapRenderer(levelLoader.getMap());
 
-            // Contact listener mejorado para detectar contacto tanto del player como del enemy
-            world.setContactListener(new ContactListener() {
-                @Override
-                public void beginContact(Contact contact) {
-                    Fixture a = contact.getFixtureA();
-                    Fixture b = contact.getFixtureB();
+        // Contact listener
+        world.setContactListener(new ContactListener() {
+            @Override
+            public void beginContact(Contact contact) {
+                Fixture a = contact.getFixtureA();
+                Fixture b = contact.getFixtureB();
 
-                    // Detectar si player toca el suelo
-                    if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                        b.getUserData() != null && b.getUserData().equals("ground")) ||
-                        (b.getUserData() != null && b.getUserData().equals("player") &&
-                            a.getUserData() != null && a.getUserData().equals("ground"))) {
-                        if (player != null) {
-                            player.setGrounded(true);
-                            System.out.println("Player tocando suelo");
-                        }
-                    }
-
-                    // Detectar si enemy toca el suelo
-                    if ((a.getUserData() != null && a.getUserData().equals("enemy") &&
-                        b.getUserData() != null && b.getUserData().equals("ground")) ||
-                        (b.getUserData() != null && b.getUserData().equals("enemy") &&
-                            a.getUserData() != null && a.getUserData().equals("ground"))) {
-                        if (enemy != null) {
-                            enemy.setGrounded(true);
-                            System.out.println("Enemy tocando suelo");
-                        }
-                    }
+                if ((a.getUserData() != null && a.getUserData().equals("player") &&
+                    b.getUserData() != null && b.getUserData().equals("ground")) ||
+                    (b.getUserData() != null && b.getUserData().equals("player") &&
+                        a.getUserData() != null && a.getUserData().equals("ground"))) {
+                    if (player != null) player.setGrounded(true);
                 }
 
-                @Override
-                public void endContact(Contact contact) {
-                    Fixture a = contact.getFixtureA();
-                    Fixture b = contact.getFixtureB();
+                // si quieres detectar colisiones del enemy con suelo en el futuro,
+                // aquí podrías agregar detección similar para "enemy"
+            }
 
-                    // Player deja de tocar el suelo
-                    if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                        b.getUserData() != null && b.getUserData().equals("ground")) ||
-                        (b.getUserData() != null && b.getUserData().equals("player") &&
-                            a.getUserData() != null && a.getUserData().equals("ground"))) {
-                        if (player != null) {
-                            player.setGrounded(false);
-                        }
-                    }
+            @Override
+            public void endContact(Contact contact) {
+                Fixture a = contact.getFixtureA();
+                Fixture b = contact.getFixtureB();
 
-                    // Enemy deja de tocar el suelo
-                    if ((a.getUserData() != null && a.getUserData().equals("enemy") &&
-                        b.getUserData() != null && b.getUserData().equals("ground")) ||
-                        (b.getUserData() != null && b.getUserData().equals("enemy") &&
-                            a.getUserData() != null && a.getUserData().equals("ground"))) {
-                        if (enemy != null) {
-                            enemy.setGrounded(false);
-                        }
-                    }
+                if ((a.getUserData() != null && a.getUserData().equals("player") &&
+                    b.getUserData() != null && b.getUserData().equals("ground")) ||
+                    (b.getUserData() != null && b.getUserData().equals("player") &&
+                        a.getUserData() != null && a.getUserData().equals("ground"))) {
+                    if (player != null)
+                        player.setGrounded(false);
                 }
+            }
 
-                @Override
-                public void preSolve(Contact contact, Manifold oldManifold) {}
-                @Override
-                public void postSolve(Contact contact, ContactImpulse impulse) {}
-            });
+            @Override public void preSolve(Contact contact, Manifold oldManifold) {}
+            @Override public void postSolve(Contact contact, ContactImpulse impulse) {}
+        });
 
-            System.out.println("GameScreen constructor completado");
-        } catch (Exception e) {
-            System.err.println("Error en constructor GameScreen: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // --- Fondo Parallax ---
+        Texture sky = new Texture("backgrounds/sky.png");
+        Texture mountains = new Texture("backgrounds/mountains.png");
+        Texture trees = new Texture("backgrounds/trees.png");
+
+        Texture[] layers = { sky, mountains, trees };
+        float[] speeds = { 0.1f, 0.3f, 0.6f }; // Menor = más lejos, Mayor = más cercano
+
+        parallax = new ParallaxBackground(layers, speeds, camera);
     }
 
     @Override
     public void show() {
-        try {
-            System.out.println("Iniciando show()...");
+        if (player == null) player = new Player(world, 200, 300);
+        if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
+        if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
 
-            // Crear player PRIMERO
-            player = new Player(world, 200, 300);
-            System.out.println("Player creado: " + player.getPosition());
-
-            // Crear enemy DESPUÉS del player
+        // Crear enemy → lo colocamos después de crear el player
+        if (enemy == null) {
             enemy = new Enemy(world, 300, 300, player);
-            System.out.println("Enemy creado: " + enemy.getPosition());
+            // si tu Player necesita registro del enemy para ataques/detección:
+            if (player != null) player.addEnemy(enemy);
+        }
 
-            // Registrar enemigo en el player para detección de golpes
-            player.addEnemy(enemy);
-            System.out.println("Enemy registrado en Player");
-
-            // Crear HUD después de instanciar el jugador
-            hud = new HUD(player);
-
-            System.out.println("show() completado correctamente");
-        } catch (Exception e) {
-            System.err.println("Error en show(): " + e.getMessage());
-            e.printStackTrace();
+        // Crear HUD después de instanciar el player (y opcionalmente el enemy)
+        if (hud == null) {
+            hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
         }
     }
 
     @Override
     public void render(float delta) {
-        try {
-            // Limpiar pantalla
-            Gdx.gl.glClearColor(0, 0, 0, 1);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-            // Actualizar mundo
-            world.step(1 / 60f, 6, 2);
-
-            // Actualizar entidades
-            if (player != null) {
-                player.update(delta);
+        // --- Input para overlays ---
+        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.H)) {
+            if (!isDeathShown) {
+                isDeathShown = true;
+                if (deathOverlay != null) deathOverlay.show();
             }
-            if (enemy != null) {
-                enemy.update(delta);
-            }
-
-            // Seguir al jugador
-            if (player != null) {
-                camera.position.set(player.getPosition().x, player.getPosition().y, 0);
-            }
-            camera.update();
-
-            // Dibujar mapa
-            if (tileMapRenderer != null) {
-                tileMapRenderer.render(camera);
-            }
-
-            // Dibujar entidades
-            batch.setProjectionMatrix(camera.combined);
-            batch.begin();
-            if (player != null) {
-                player.render(batch);
-            }
-            if (enemy != null) {
-                enemy.render(batch);
-            }
-            batch.end();
-
-            // Render HUD en espacio de pantalla
-            uiViewport.apply();
-            uiCamera.update();
-            if (hud != null) {
-                hud.render(uiCamera, batch);
-            }
-
-            // Debug de colisiones
-            Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
-            debugRenderer.render(world, debugMatrix);
-
-        } catch (Exception e) {
-            System.err.println("Error en render(): " + e.getMessage());
-            e.printStackTrace();
         }
+
+        if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
+            if (!isPaused) {
+                isPaused = true;
+                pauseOverlay.show();
+            }
+        }
+
+        // --- Lógica de actualización ---
+        if (!isPaused && !isDeathShown) {
+            world.step(1 / 60f, 6, 2);
+            if (player != null) player.update(delta);
+            if (enemy != null) enemy.update(delta); // actualizar enemy también
+        }
+
+        // --- Actualizar cámara ---
+        if (player != null) {
+            camera.position.set(player.getPosition().x, player.getPosition().y, 0);
+            camera.update();
+        }
+
+        // --- Actualizar Parallax ---
+        parallax.update(delta);
+
+        // --- Renderizado ---
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        parallax.render(batch); // 👈 Fondo primero
+        batch.end();
+
+        // Luego mapa y entidades
+        tileMapRenderer.render(camera);
+
+        batch.begin();
+        if (player != null) player.render(batch);
+        if (enemy != null) enemy.render(batch); // render del enemy en el mundo
+        batch.end();
+
+        // Debug opcional
+        Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
+        debugRenderer.render(world, debugMatrix);
+
+        // Render HUD en espacio de pantalla (usa uiViewport/uiCamera)
+        uiViewport.apply();
+        uiCamera.update();
+        if (hud != null) {
+            // Suponiendo que HUD tiene un método render(OrthographicCamera, SpriteBatch)
+            hud.render(uiCamera, batch);
+        }
+
+        // Overlays
+        if (isPaused && pauseOverlay != null) pauseOverlay.render(delta);
+        if (isDeathShown && deathOverlay != null) deathOverlay.render(delta);
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
-        if (uiViewport != null) {
-            uiViewport.update(width, height, true);
-            uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
-            uiCamera.update();
-        }
+        uiViewport.update(width, height, true);
+
+        if (pauseOverlay != null) pauseOverlay.getStage().getViewport().update(width, height, true);
+        if (deathOverlay != null) deathOverlay.getStage().getViewport().update(width, height, true);
     }
 
-    @Override public void hide() {}
+    @Override public void hide() {
+        if (pauseOverlay != null) pauseOverlay.hide();
+        if (deathOverlay != null) deathOverlay.hide();
+    }
     @Override public void pause() {}
     @Override public void resume() {}
 
+    public void resumeFromPause() {
+        if (!isPaused) return;
+        isPaused = false;
+        if (pauseOverlay != null) pauseOverlay.hide();
+        Gdx.input.setInputProcessor(null);
+    }
+
+    public Main getGame() { return game; }
+    public boolean isPaused() { return isPaused; }
+
+    public void onOverlayReturned() {
+        if (isPaused && pauseOverlay != null) {
+            pauseOverlay.getStage().getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+            pauseOverlay.show();
+        }
+    }
+
+
     @Override
     public void dispose() {
-        try {
-            if (batch != null) batch.dispose();
-            if (tileMapRenderer != null) tileMapRenderer.dispose();
-            if (levelLoader != null) levelLoader.dispose();
-            if (world != null) world.dispose();
-            if (debugRenderer != null) debugRenderer.dispose();
-
-            // Dispose de entidades y HUD
-            if (player != null) player.dispose();
-            if (enemy != null) enemy.dispose();
-            if (hud != null) hud.dispose();
-
-            System.out.println("GameScreen disposed correctamente");
-        } catch (Exception e) {
-            System.err.println("Error en dispose(): " + e.getMessage());
-            e.printStackTrace();
-        }
+        batch.dispose();
+        tileMapRenderer.dispose();
+        levelLoader.dispose();
+        world.dispose();
+        debugRenderer.dispose();
+        if (pauseOverlay != null) pauseOverlay.dispose();
+        if (deathOverlay != null) deathOverlay.dispose();
+        if (player != null) player.dispose();
+        if (enemy != null) enemy.dispose();
+        if (hud != null) hud.dispose();
     }
 }
