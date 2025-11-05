@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.graphics.Texture;
@@ -15,6 +16,7 @@ import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
+import com.TfPooAs.Souls2D.entities.Enemy;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
@@ -25,6 +27,7 @@ import com.TfPooAs.Souls2D.entities.items.Bonfire;
 import com.TfPooAs.Souls2D.entities.npcs.FireKeeper;
 import com.TfPooAs.Souls2D.world.ParallaxBackground;
 import com.TfPooAs.Souls2D.systems.SaveSystem;
+import com.TfPooAs.Souls2D.ui.HUD;
 
 public class GameScreen implements Screen {
 
@@ -32,6 +35,11 @@ public class GameScreen implements Screen {
     private boolean startAtLastSave; // default false
     private OrthographicCamera camera;
     private FitViewport viewport;
+
+    // Cámara/viewport para UI (HUD)
+    private OrthographicCamera uiCamera;
+    private FitViewport uiViewport;
+
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
 
@@ -49,6 +57,8 @@ public class GameScreen implements Screen {
     private TileMapRenderer tileMapRenderer;
 
     private Player player;
+    private Enemy enemy;
+    private HUD hud;
 
     // Overlays
     private PauseOverlay pauseOverlay;
@@ -72,6 +82,16 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
         viewport.apply();
+        // Acercar la cámara al jugador (zoom in)
+        camera.zoom = 0.5f; // menor a 1 = más cerca
+        camera.update();
+
+        // UI camera/viewport para dibujar HUD en coordenadas de pantalla
+        uiCamera = new OrthographicCamera();
+        uiViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, uiCamera);
+        uiViewport.apply();
+        uiCamera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
+        uiCamera.update();
 
         batch = new SpriteBatch();
         debugRenderer = new Box2DDebugRenderer();
@@ -100,6 +120,9 @@ public class GameScreen implements Screen {
                         a.getUserData() != null && a.getUserData().equals("ground"))) {
                     if (player != null) player.setGrounded(true);
                 }
+
+                // si quieres detectar colisiones del enemy con suelo en el futuro,
+                // aquí podrías agregar detección similar para "enemy"
             }
 
             @Override
@@ -111,7 +134,8 @@ public class GameScreen implements Screen {
                     b.getUserData() != null && b.getUserData().equals("ground")) ||
                     (b.getUserData() != null && b.getUserData().equals("player") &&
                         a.getUserData() != null && a.getUserData().equals("ground"))) {
-                    if (player != null) player.setGrounded(false);
+                    if (player != null)
+                        player.setGrounded(false);
                 }
             }
 
@@ -173,16 +197,26 @@ public class GameScreen implements Screen {
         }
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
+
+        // Crear enemy → lo colocamos después de crear el player
+        if (enemy == null) {
+            enemy = new Enemy(world, 300, 300, player);
+            // si tu Player necesita registro del enemy para ataques/detección:
+            if (player != null) player.addEnemy(enemy);
+        }
+
+        // Crear HUD después de instanciar el player (y opcionalmente el enemy)
+        if (hud == null) {
+            hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
+        }
     }
 
     @Override
     public void render(float delta) {
-        // --- Input para overlays ---
-        if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.H)) {
-            if (!isDeathShown) {
-                isDeathShown = true;
-                if (deathOverlay != null) deathOverlay.show();
-            }
+        // --- Trigger automático de DeathOverlay cuando el jugador muere ---
+        if (!isDeathShown && player != null && player.isDead()) {
+            isDeathShown = true;
+            if (deathOverlay != null) deathOverlay.show();
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
@@ -203,11 +237,14 @@ public class GameScreen implements Screen {
             for (FireKeeper fk : fireKeepers) {
                 fk.update(delta);
             }
+            if (enemy != null) enemy.update(delta); // actualizar enemy también
         }
 
         // --- Actualizar cámara ---
         if (player != null) {
-            camera.position.set(player.getPosition().x, player.getPosition().y, 0);
+            float cx = player.getPosition().x + player.getWidth() / 2f;
+            float cy = player.getPosition().y + player.getHeight() / 2f;
+            camera.position.set(cx, cy, 0);
             camera.update();
         }
 
@@ -231,19 +268,31 @@ public class GameScreen implements Screen {
         for (Bonfire b : bonfires) b.render(batch);
         for (FireKeeper fk : fireKeepers) fk.render(batch);
         if (player != null) player.render(batch);
+        if (enemy != null) enemy.render(batch); // render del enemy en el mundo
         batch.end();
 
         // Debug opcional
-        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+        Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
 
-        // Overlays
+
+        // Overlays primero (se dibujan sobre el juego)
         if (isPaused && pauseOverlay != null) pauseOverlay.render(delta);
         if (isDeathShown && deathOverlay != null) deathOverlay.render(delta);
+
+        // Render HUD en espacio de pantalla (usa uiViewport/uiCamera) SIEMPRE ENCIMA
+        uiViewport.apply();
+        uiCamera.update();
+        if (hud != null) {
+            // HUD visible incluso con overlays (pausa/muerte)
+            hud.render(uiCamera, batch);
+        }
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        uiViewport.update(width, height, true);
+
         if (pauseOverlay != null) pauseOverlay.getStage().getViewport().update(width, height, true);
         if (deathOverlay != null) deathOverlay.getStage().getViewport().update(width, height, true);
     }
@@ -291,6 +340,7 @@ public class GameScreen implements Screen {
         }
     }
 
+
     @Override
     public void dispose() {
         batch.dispose();
@@ -304,5 +354,8 @@ public class GameScreen implements Screen {
         for (FireKeeper fk : fireKeepers) fk.dispose();
         bonfires.clear();
         fireKeepers.clear();
+        if (player != null) player.dispose();
+        if (enemy != null) enemy.dispose();
+        if (hud != null) hud.dispose();
     }
 }

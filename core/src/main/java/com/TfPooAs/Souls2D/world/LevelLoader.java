@@ -1,3 +1,4 @@
+
 package com.TfPooAs.Souls2D.world;
 
 import com.TfPooAs.Souls2D.utils.Constants;
@@ -49,9 +50,10 @@ public class LevelLoader {
                 fdef.friction = 0.8f;
                 fdef.restitution = 0f;
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
-                fdef.filter.maskBits = Constants.BIT_PLAYER;
+                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY; // ¡AGREGAR BIT_ENEMY!
 
-                body.createFixture(fdef);
+                // ¡AGREGAR USERDATA PARA DETECCIÓN!
+                body.createFixture(fdef).setUserData("ground");
                 shape.dispose();
             }
 
@@ -97,9 +99,10 @@ public class LevelLoader {
                 fdef.friction = 0.8f;
                 fdef.restitution = 0f;
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
-                fdef.filter.maskBits = Constants.BIT_PLAYER;
+                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY; // ¡AGREGAR BIT_ENEMY!
 
-                body.createFixture(fdef);
+                // ¡AGREGAR USERDATA PARA DETECCIÓN!
+                body.createFixture(fdef).setUserData("ground");
                 shape.dispose();
             }
         }

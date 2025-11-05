@@ -4,22 +4,22 @@ import com.TfPooAs.Souls2D.core.Main;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /**
  * PauseOverlay: overlay de UI que se dibuja sobre GameScreen sin cambiar de Screen.
- * Ahora incluye un headerImage centrado en el borde superior que no oscurece
- * el resto del overlay (solo su área).
+ * Ahora muestra un título centrado "JUEGO PAUSADO" y botones con fuente Garamond.
  */
 public class PauseOverlay {
     private final Stage stage;
@@ -27,63 +27,76 @@ public class PauseOverlay {
     private final Texture dimTexture; // 1x1 texture para dimming
     private final GameScreen gameScreen;
 
-    // header image
-    private Texture headerTexture;
-    private Image headerImage;
-    private float headerWidth = 700f;  // ajustá si querés
-    private float headerHeight = 375f; // ajustá si querés
-    private float headerTopMargin = 30f; // margen desde el borde superior
-
-    // Fuente personalizada
-    private BitmapFont garamondFont;
+    // Fuentes Garamond
+    private BitmapFont garamondTitleFont;
+    private BitmapFont garamondButtonFont;
 
     public PauseOverlay(Main game, GameScreen gameScreen) {
         this.gameScreen = gameScreen;
         stage = new Stage(new ScreenViewport());
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         dimTexture = create1x1Texture();
-        generateFont(); // genera garamondFont
+
+        generateFonts(); // genera las fuentes Garamond
         buildUI();
-        loadHeader();          // carga y posiciona el header
     }
 
     /**
-     * Genera el BitmapFont a partir del OTF. Ajustá el tamaño (parameter.size)
-     * según lo que necesites para que los botones se vean bien.
+     * Genera los BitmapFont a partir del OTF.
+     * Ajustá `parameter.size` si querés otro tamaño para título / botones.
      */
-    private void generateFont() {
+    private void generateFonts() {
         try {
-            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
-            FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-            parameter.size = 32;          // --> ajustá este tamaño
+            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
+                Gdx.files.internal("assets/ui/Garamond.otf"));
+            FreeTypeFontGenerator.FreeTypeFontParameter parameter =
+                new FreeTypeFontGenerator.FreeTypeFontParameter();
+
+            // Título (grande)
+            parameter.size = 120; // probá 72, 96, 120 según prefieras
             parameter.spaceX = 0;
             parameter.spaceY = 0;
-            // parameter.borderWidth = 0; // si querés borde, configuralo
-            garamondFont = generator.generateFont(parameter);
+            garamondTitleFont = generator.generateFont(parameter);
+
+            // Botones (más pequeño)
+            parameter.size = 40;
+            garamondButtonFont = generator.generateFont(parameter);
+
             generator.dispose();
         } catch (Exception e) {
-            Gdx.app.error("PauseOverlay", "No se pudo generar la fuente AdobeGaramond-Bold.otf: " + e.getMessage());
-            garamondFont = new BitmapFont(); // fallback
+            Gdx.app.error("PauseOverlay", "No se pudo generar la fuente Garamond: " + e.getMessage());
+            garamondTitleFont = new BitmapFont();
+            garamondButtonFont = new BitmapFont();
         }
     }
 
     private void buildUI() {
-        Table t = new Table();
-        t.setFillParent(true);
-        t.center();
+        Table root = new Table();
+        root.setFillParent(true);
+        root.center();
 
-        // obtenemos el estilo por defecto del skin y clonamos sus drawables,
-        // asignándole nuestra fuente al nuevo style.
-        TextButton.TextButtonStyle baseStyle = skin.get(TextButton.TextButtonStyle.class);
-        TextButton.TextButtonStyle btnStyle = new TextButton.TextButtonStyle();
-        btnStyle.up = baseStyle.up;
-        btnStyle.down = baseStyle.down;
-        btnStyle.checked = baseStyle.checked;
-        btnStyle.over = baseStyle.over;
-        btnStyle.disabled = baseStyle.disabled;
-        btnStyle.font = garamondFont;
-        // si el baseStyle usa fontColor, se puede copiar:
-        btnStyle.fontColor = baseStyle.fontColor;
+        // Título centrado en la pantalla
+        Label.LabelStyle titleStyle = new Label.LabelStyle(garamondTitleFont, Color.WHITE);
+        Label title = new Label("JUEGO PAUSADO", titleStyle);
+
+        // Preparar estilo de botón clonando el style del skin si existe
+        TextButtonStyle baseStyle = null;
+        try {
+            baseStyle = skin.get(TextButtonStyle.class);
+        } catch (Exception ignored) {}
+
+        TextButtonStyle btnStyle = new TextButtonStyle();
+        if (baseStyle != null) {
+            btnStyle.up = baseStyle.up;
+            btnStyle.down = baseStyle.down;
+            btnStyle.checked = baseStyle.checked;
+            btnStyle.over = baseStyle.over;
+            btnStyle.disabled = baseStyle.disabled;
+            btnStyle.fontColor = baseStyle.fontColor;
+        } else {
+            btnStyle.fontColor = Color.WHITE;
+        }
+        btnStyle.font = garamondButtonFont;
 
         TextButton resume = new TextButton("Continuar", btnStyle);
         TextButton options = new TextButton("Opciones", btnStyle);
@@ -95,78 +108,52 @@ public class PauseOverlay {
         // resume.getLabel().setFontScale(2.0f);
 
         // Resume: llama a método de GameScreen para despausar y teletransportar al último guardado si existe
+        // Listeners
         resume.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
                 gameScreen.resumeFromPauseToLastSave();
             }
         });
 
-        // Options: usamos el GSM, pero sin destruir la GameScreen
         options.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                // showOptions en gsm está preparado para "keep previous"
                 gameScreen.getGame().gsm.showOptions(gameScreen);
             }
         });
 
-        // Quit: volver al menú principal
         quit.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                // Si necesitás guardar estado antes de salir lo llamás aquí
                 gameScreen.getGame().gsm.showMainMenu();
             }
         });
 
-        float btnW = 300f, btnH = 56f, pad = 6f;
-        t.add(resume).width(btnW).height(btnH).pad(pad);
-        t.row();
-        t.add(options).width(btnW).height(btnH).pad(pad);
-        t.row();
-        t.add(quit).width(btnW).height(btnH).pad(pad);
+        // Layout: título arriba, botones centrados debajo
+        float btnW = 300f, btnH = 56f, pad = 8f;
+        root.add(title).colspan(1).padBottom(400f);
+        root.row();
+        root.add(resume).width(btnW).height(btnH).pad(pad);
+        root.row();
+        root.add(options).width(btnW).height(btnH).pad(pad);
+        root.row();
+        root.add(quit).width(btnW).height(btnH).pad(pad);
 
-        stage.addActor(t);
-    }
-
-    private void loadHeader() {
-        // Cargar la textura del header. Ruta: core/assets/ui/pause_header.png
-        try {
-            headerTexture = new Texture(Gdx.files.internal("ui/pause_header.png"));
-            headerImage = new Image(new TextureRegion(headerTexture));
-            headerImage.setSize(headerWidth, headerHeight);
-            positionHeader(); // coloca en viewport actual
-            // Insertar el header ANTES de la UI para que no tape botones (si querés lo pongas encima)
-            stage.addActor(headerImage);
-        } catch (Exception e) {
-            // Si falta el asset, evitamos crash y seguimos sin header
-            headerTexture = null;
-            headerImage = null;
-            Gdx.app.log("PauseOverlay", "No se pudo cargar pause_header.png: " + e.getMessage());
-        }
-    }
-
-    private void positionHeader() {
-        if (headerImage == null) return;
-        float vw = stage.getViewport().getWorldWidth();
-        float vh = stage.getViewport().getWorldHeight();
-        float x = (vw - headerWidth) / 2f;
-        float y = vh - headerHeight - headerTopMargin;
-        headerImage.setPosition(x, y);
+        stage.addActor(root);
     }
 
     // Dibuja el overlay (dimming + stage)
     public void render(float delta) {
         stage.act(delta);
 
-        // Dibujar dimming usando el batch del stage
+        // Dimming desactivado
         stage.getBatch().begin();
-        stage.getBatch().setColor(0f, 0f, 0f, 0.45f); // opacidad 0.45
+        stage.getBatch().setColor(0f, 0f, 0f, 0.70f);
         float w = stage.getViewport().getWorldWidth();
         float h = stage.getViewport().getWorldHeight();
         stage.getBatch().draw(dimTexture, 0, 0, w, h);
         stage.getBatch().setColor(1f, 1f, 1f, 1f);
         stage.getBatch().end();
 
-        // Dibujamos los widgets (botones y header)
+        // Dibujamos los widgets (botones y título)
         stage.draw();
     }
 
@@ -175,9 +162,8 @@ public class PauseOverlay {
     }
 
     public void show() {
-        // Actualizamos viewport y posición header al mostrar
+        // Actualizamos viewport al mostrar
         stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
-        positionHeader();
         Gdx.input.setInputProcessor(stage);
     }
 
@@ -189,8 +175,8 @@ public class PauseOverlay {
         stage.dispose();
         skin.dispose();
         dimTexture.dispose();
-        if (headerTexture != null) headerTexture.dispose();
-        if (garamondFont != null) garamondFont.dispose();
+        if (garamondTitleFont != null) garamondTitleFont.dispose();
+        if (garamondButtonFont != null) garamondButtonFont.dispose();
     }
 
     private Texture create1x1Texture() {

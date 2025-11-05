@@ -132,9 +132,9 @@ public class DeathOverlay {
 
     public void render(float delta) {
         stage.act(delta);
-        // dimming por detrás
+        // Dimming desactivado
         stage.getBatch().begin();
-        stage.getBatch().setColor(0f, 0f, 0f, 0.55f);
+        stage.getBatch().setColor(0f, 0f, 0f, 0.45f);
         float w = stage.getViewport().getWorldWidth();
         float h = stage.getViewport().getWorldHeight();
         stage.getBatch().draw(dimTexture, 0, 0, w, h);

@@ -68,6 +68,7 @@ public class MainMenuScreen implements Screen {
         // Crear botones con estilo nuevo
         TextButton newGame = new TextButton("Nueva Partida", garamondButtonStyle);
         TextButton cont = new TextButton("Continuar", garamondButtonStyle);
+        cont.getLabel().setColor(Color.DARK_GRAY);
         TextButton options = new TextButton("Opciones", garamondButtonStyle);
         TextButton exit = new TextButton("Salir", garamondButtonStyle);
 
@@ -127,7 +128,7 @@ public class MainMenuScreen implements Screen {
             garamondSubtitleFont = generator.generateFont(parameter);
 
             // Fuente de los botones
-            parameter.size = 48;
+            parameter.size = 60;
             garamondButtonFont = generator.generateFont(parameter);
 
             generator.dispose();
