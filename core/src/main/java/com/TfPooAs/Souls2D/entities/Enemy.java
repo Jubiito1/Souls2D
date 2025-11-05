@@ -5,13 +5,19 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 
 import com.TfPooAs.Souls2D.utils.Constants;
+
 
 public class Enemy extends Entity {
     private Body body;
     private World world;
     private Player player; // referencia al jugador para detectarlo
+
+    // Textura 1x1 para dibujar barras con SpriteBatch (compartida)
+    private static Texture whiteTex;
 
     // === Sistema de vida ===
     private int maxHealth = 50;
@@ -256,6 +262,38 @@ public class Enemy extends Entity {
             // Voltear horizontalmente cuando mira a la izquierda
             batch.draw(currentTexture, position.x + width, position.y, -width, height);
         }
+
+        // === Barra de vida encima del enemigo ===
+        // Lazy-init de textura blanca 1x1 para rectángulos
+        if (whiteTex == null) {
+            Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+            pm.setColor(1, 1, 1, 1);
+            pm.fill();
+            whiteTex = new Texture(pm);
+            pm.dispose();
+        }
+
+        float barWidth = Math.max(30f, width); // al menos 30px de ancho
+        float barHeight = 6f;
+        float barX = position.x + (width - barWidth) / 2f;
+        float barY = position.y + height + 6f; // un poco por encima
+        float ratio = Math.max(0f, Math.min(1f, (float) currentHealth / (float) maxHealth));
+
+        // Guardar color actual y usar tintes para "pintar" la whiteTex
+        Color prev = batch.getColor().cpy();
+
+        // Borde
+        batch.setColor(new Color(0.15f, 0.15f, 0.15f, 1f));
+        batch.draw(whiteTex, barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        // Fondo interior
+        batch.setColor(new Color(0.07f, 0.07f, 0.07f, 1f));
+        batch.draw(whiteTex, barX, barY, barWidth, barHeight);
+        // Relleno de vida
+        batch.setColor(new Color(0.75f, 0.15f, 0.10f, 1f));
+        batch.draw(whiteTex, barX, barY, barWidth * ratio, barHeight);
+
+        // Restaurar el color del batch para no afectar otros renders
+        batch.setColor(prev);
     }
 
     // === Métodos para el sistema de físicas ===

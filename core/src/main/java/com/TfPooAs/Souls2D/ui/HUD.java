@@ -17,12 +17,12 @@ public class HUD {
     // Layout constants (en píxeles de pantalla para 1920x1080 virtual)
     private static final float MARGEN = 30f;
 
-    // Tamaños de la barra de vida
-    private static final float ANCHO_BARRA_VIDA = 600f;
-    private static final float ALTO_BARRA_VIDA = 24f;
+    // Tamaños de la barra de vida (ligeramente más chica que antes)
+    private static final float ANCHO_BARRA_VIDA = 540f; // antes 600
+    private static final float ALTO_BARRA_VIDA = 20f;   // antes 24
 
     // Tamaños de la barra de stamina
-    private static final float ALTO_BARRA_STAMINA = 16f;
+    private static final float ALTO_BARRA_STAMINA = 14f; // antes 16
     private static final float ESPACIO_ENTRE_BARRAS = 10f;
 
     // Icono de Estus
@@ -108,6 +108,8 @@ public class HUD {
 
         // Dibujar textos con el batch de UI
         uiBatch.setProjectionMatrix(uiCamera.combined);
+        // Aseguramos que el batch no herede tintes previos
+        uiBatch.setColor(Color.WHITE);
         uiBatch.begin();
         // Texto de vida (opcional)
         font.setColor(0.9f, 0.9f, 0.9f, 0.85f);
@@ -121,6 +123,8 @@ public class HUD {
         font.setColor(Color.WHITE);
         font.draw(uiBatch, numeroEstus, numeroX, numeroY);
         uiBatch.end();
+        // Reset de color para no afectar a otros renders
+        uiBatch.setColor(Color.WHITE);
     }
 
     public void dispose() {

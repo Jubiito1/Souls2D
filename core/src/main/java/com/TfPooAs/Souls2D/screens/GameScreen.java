@@ -201,17 +201,17 @@ public class GameScreen implements Screen {
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
 
 
-        // Render HUD en espacio de pantalla (usa uiViewport/uiCamera)
+        // Overlays primero (se dibujan sobre el juego)
+        if (isPaused && pauseOverlay != null) pauseOverlay.render(delta);
+        if (isDeathShown && deathOverlay != null) deathOverlay.render(delta);
+
+        // Render HUD en espacio de pantalla (usa uiViewport/uiCamera) SIEMPRE ENCIMA
         uiViewport.apply();
         uiCamera.update();
         if (hud != null) {
-            // Suponiendo que HUD tiene un método render(OrthographicCamera, SpriteBatch)
+            // HUD visible incluso con overlays (pausa/muerte)
             hud.render(uiCamera, batch);
         }
-
-        // Overlays
-        if (isPaused && pauseOverlay != null) pauseOverlay.render(delta);
-        if (isDeathShown && deathOverlay != null) deathOverlay.render(delta);
     }
 
     @Override

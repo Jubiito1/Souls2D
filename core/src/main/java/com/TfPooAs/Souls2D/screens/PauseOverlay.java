@@ -138,9 +138,9 @@ public class PauseOverlay {
     public void render(float delta) {
         stage.act(delta);
 
-        // Dibujar dimming usando el batch del stage
+        // Dimming desactivado
         stage.getBatch().begin();
-        stage.getBatch().setColor(0f, 0f, 0f, 0.45f); // opacidad 0.45
+        stage.getBatch().setColor(0f, 0f, 0f, 0.70f);
         float w = stage.getViewport().getWorldWidth();
         float h = stage.getViewport().getWorldHeight();
         stage.getBatch().draw(dimTexture, 0, 0, w, h);
