@@ -46,7 +46,7 @@ public class Player extends Entity {
     private final float ATTACK_DURATION = 0.3f;
     private boolean facingRight = true;
     private final float ATTACK_RANGE = 60f; // rango de ataque en píxeles
-    private final int ATTACK_DAMAGE = 5; // daño que hace a enemigos
+    private final int ATTACK_DAMAGE = 25; // daño que hace a enemigos
     // Ventana de impacto del ataque (porcentaje del tiempo total)
     private boolean hasDealtDamageThisAttack = false;
 
@@ -61,11 +61,16 @@ public class Player extends Entity {
     private Animation<TextureRegion> attackAnim;
     private Animation<TextureRegion> walkAnim;
     private Animation<TextureRegion> healAnim;
+    private Animation<TextureRegion> rollAnim;
+    private Animation<TextureRegion> jumpAnim;
     private float stateTime = 0f;
+    private float jumpTimer = 0f;
     private Texture idleSheetTexture; // solo si cargamos spritesheet
     private Texture attackSheetTexture; // solo si cargamos spritesheet
     private Texture walkSheetTexture;
     private Texture healSheetTexture;
+    private Texture rollSheetTexture;
+    private Texture jumpSheetTexture;
 
     // === Curación con Estus ===
     private estus estus = new estus();
@@ -76,7 +81,7 @@ public class Player extends Entity {
     // === Rodar (esquivar) ===
     private boolean isRolling = false;
     private float rollTimer = 0f;
-    private final float ROLL_DURATION = 0.45f; // duración de i-frames
+    private final float ROLL_DURATION = 0.30f; // duración de i-frames
     private final float ROLL_SPEED = 3.2f; // velocidad horizontal durante el rodar
     private Texture rollTexture;
 
@@ -86,9 +91,6 @@ public class Player extends Entity {
     public Player(World world, float x, float y) {
         super(x, y, "player.png");
         this.world = world;
-        this.attackTexture = new Texture("player_attack.png");
-        this.healTexture = new Texture("player_attack.png"); // usar temporalmente el mismo sprite
-        this.rollTexture = new Texture("player_attack.png"); // placeholder para rodar
         this.enemies = new Array<>();
 
         // Cargar animaciones desde spritesheets si existen
@@ -132,6 +134,20 @@ public class Player extends Entity {
         if (healPair != null) {
             this.healAnim = healPair.animation;
             this.healSheetTexture = healPair.texture;
+        }
+        // Rodar (9 frames)
+        AnimationUtils.AnimWithTexture rollPair = AnimationUtils.createFromSpritesheetIfExists(
+                "caballeroRoll-Sheet.png", 9, 1, ROLL_DURATION / 9f, Animation.PlayMode.NORMAL);
+        if (rollPair != null) {
+            this.rollAnim = rollPair.animation;
+            this.rollSheetTexture = rollPair.texture;
+        }
+        // Salto (4 frames)
+        AnimationUtils.AnimWithTexture jumpPair = AnimationUtils.createFromSpritesheetIfExists(
+                "caballeroJump-Sheet.png", 4, 1, 0.08f, Animation.PlayMode.NORMAL);
+        if (jumpPair != null) {
+            this.jumpAnim = jumpPair.animation;
+            this.jumpSheetTexture = jumpPair.texture;
         }
 
         createBody(x, y);
@@ -231,6 +247,13 @@ public class Player extends Entity {
         updateAttack(delta);
         updateHealing(delta);
         updateStamina(delta);
+
+        // Timer de salto/aire
+        if (Math.abs(body.getLinearVelocity().y) > 0.05f) {
+            jumpTimer += delta;
+        } else {
+            jumpTimer = 0f;
+        }
 
         // Sincronizar posición visual con posición del cuerpo
         position.set(
@@ -487,13 +510,22 @@ public class Player extends Entity {
     public void render(SpriteBatch batch) {
         if (!active) return;
 
-        // Cuando se está rodando o curando, priorizar las texturas de estado
+        // Prioridad de animación: Rodar > Curar > Atacar > En el aire (salto) > Caminar > Idle
         if (isRolling) {
-            Texture tex = rollTexture != null ? rollTexture : texture;
-            if (facingRight) {
-                batch.draw(tex, position.x, position.y, width, height);
+            if (rollAnim != null) {
+                TextureRegion frame = rollAnim.getKeyFrame(rollTimer);
+                if (facingRight) {
+                    batch.draw(frame, position.x, position.y, width, height);
+                } else {
+                    batch.draw(frame, position.x + width, position.y, -width, height);
+                }
             } else {
-                batch.draw(tex, position.x + width, position.y, -width, height);
+                Texture tex = rollTexture != null ? rollTexture : texture;
+                if (facingRight) {
+                    batch.draw(tex, position.x, position.y, width, height);
+                } else {
+                    batch.draw(tex, position.x + width, position.y, -width, height);
+                }
             }
             return;
         }
@@ -516,7 +548,7 @@ public class Player extends Entity {
             return;
         }
 
-        // Elegir frame según estado (ataque, caminar o idle)
+        // Elegir frame según estado (ataque, salto, caminar o idle)
         if (isAttacking && attackAnim != null) {
             TextureRegion frame = attackAnim.getKeyFrame(attackTimer);
             if (facingRight) {
@@ -525,8 +557,16 @@ public class Player extends Entity {
                 batch.draw(frame, position.x + width, position.y, -width, height);
             }
         } else {
+            boolean airborne = Math.abs(body.getLinearVelocity().y) > 0.05f;
             boolean moving = Math.abs(body.getLinearVelocity().x) > 0.05f;
-            if (moving && walkAnim != null) {
+            if (airborne && jumpAnim != null) {
+                TextureRegion frame = jumpAnim.getKeyFrame(jumpTimer);
+                if (facingRight) {
+                    batch.draw(frame, position.x, position.y, width, height);
+                } else {
+                    batch.draw(frame, position.x + width, position.y, -width, height);
+                }
+            } else if (moving && walkAnim != null) {
                 TextureRegion frame = walkAnim.getKeyFrame(stateTime);
                 if (facingRight) {
                     batch.draw(frame, position.x, position.y, width, height);
@@ -642,6 +682,12 @@ public class Player extends Entity {
         }
         if (healSheetTexture != null) {
             healSheetTexture.dispose();
+        }
+        if (rollSheetTexture != null) {
+            rollSheetTexture.dispose();
+        }
+        if (jumpSheetTexture != null) {
+            jumpSheetTexture.dispose();
         }
     }
 }

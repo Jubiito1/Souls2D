@@ -5,6 +5,8 @@ backgrounds/trees.png
 caballeroAtaque-Sheet.png
 caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png
+caballeroJump-Sheet.png
+caballeroRoll-Sheet.png
 caballeroWalk-Sheet.png
 enemy.png
 enemy_attack.png
