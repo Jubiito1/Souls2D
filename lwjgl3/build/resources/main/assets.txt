@@ -1,12 +1,15 @@
 .gitkeep
-maps/New Piskel.png
 maps/cemetery.tmx
-maps/prueba.tsx
+maps/tilemapeardo.png
+maps/tilemapeardo.tsx
+maps/tilemapeardo2.png
+maps/tilemapeardo2.tsx
 player.png
 ui/font-list.fnt
 ui/font-subtitle.fnt
 ui/font-window.fnt
 ui/font.fnt
+ui/interact_e.png
 ui/uiskin.atlas
 ui/uiskin.json
 ui/uiskin.png
