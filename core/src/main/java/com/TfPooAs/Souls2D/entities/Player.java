@@ -588,6 +588,30 @@ public class Player extends Entity {
         return body;
     }
 
+    // Restaura vida y estamina al máximo al descansar en una bonfire
+    public void restoreFullAtBonfire() {
+        if (isDead) {
+            // Revivir si estaba muerto
+            isDead = false;
+        }
+        currentHealth = maxHealth;
+        currentStamina = maxStamina;
+        // Cancelar estados transitorios
+        isAttacking = false;
+        hasDealtDamageThisAttack = false;
+        attackTimer = 0f;
+        isHealing = false;
+        healingTimer = 0f;
+        isRolling = false;
+        rollTimer = 0f;
+        staminaRegenDelayTimer = 0f;
+        // Detener movimiento
+        if (body != null) {
+            body.setLinearVelocity(0, body.getLinearVelocity().y);
+        }
+        System.out.println("Descansaste en la hoguera: vida y estamina restauradas.");
+    }
+
     @Override
     public void dispose() {
         super.dispose();

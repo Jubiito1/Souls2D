@@ -231,6 +231,14 @@ public class GameScreen implements Screen {
             // Actualizar entidades del mapa
             for (Bonfire b : bonfires) {
                 b.update(delta, player);
+                if (b.consumeJustRested()) {
+                    if (player != null) {
+                        player.restoreFullAtBonfire();
+                    }
+                    // Resetear enemigos a su spawn y revivirlos
+                    resetEnemiesToSpawn();
+                    Gdx.app.log("GameScreen", "Descanso en bonfire: vida/estamina restauradas y enemigos reseteados.");
+                }
             }
             for (FireKeeper fk : fireKeepers) {
                 fk.update(delta);
@@ -339,6 +347,12 @@ public class GameScreen implements Screen {
         }
     }
 
+    // Resetear todos los enemigos a su posición inicial
+    private void resetEnemiesToSpawn() {
+        if (enemy != null) {
+            enemy.resetToSpawn();
+        }
+    }
 
     @Override
     public void dispose() {

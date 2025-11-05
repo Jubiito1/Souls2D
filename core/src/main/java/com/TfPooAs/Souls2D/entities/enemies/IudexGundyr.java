@@ -2,6 +2,7 @@ package com.TfPooAs.Souls2D.entities.enemies;
 
 import com.TfPooAs.Souls2D.entities.Enemy;
 import com.TfPooAs.Souls2D.entities.Player;
+import com.badlogic.gdx.physics.box2d.World;
 
 /**
  * IudexGundyr (adaptado): jefe gigante con lanza — 4 ataques y 2 fases.
@@ -60,8 +61,8 @@ public class IudexGundyr extends Enemy {
     private float a4_pushForce = 300f;
     private float a4_cooldown_after_phase = 1.0f;
 
-    public IudexGundyr(float x, float y) {
-        super(x, y);
+    public IudexGundyr(World world, float x, float y, Player player) {
+        super(world, x, y, player);
         this.width = 96;   // ajustar collider según sprites
         this.height = 170;
         this.speed = baseSpeed;
@@ -73,7 +74,6 @@ public class IudexGundyr extends Enemy {
      * Firma propuesta: update(float dt, Player player)
      * Si tu proyecto usa otra firma, adapta en consecuencia.
      */
-    @Override
     public void update(float dt, Player player) {
         if (state == State.DEAD) return;
 
@@ -115,7 +115,7 @@ public class IudexGundyr extends Enemy {
         }
 
         // orientar al jugador (útil para decidir "detrás")
-        if (player.x > this.x) facingRight = true;
+        if (player.getPosition().x > this.position.x) facingRight = true;
         else facingRight = false;
     }
 
@@ -132,7 +132,7 @@ public class IudexGundyr extends Enemy {
             return;
         }
 
-        float dx = player.x - this.x;
+        float dx = player.getPosition().x - this.position.x;
         float dist = Math.abs(dx);
 
         if (isPlayerBehind(player) && dist < 90f) {
@@ -148,8 +148,8 @@ public class IudexGundyr extends Enemy {
     }
 
     private void moveTowards(Player player, float dt) {
-        float dir = Math.signum(player.x - this.x);
-        this.x += dir * this.speed * (phase2 ? phase2SpeedMultiplier : 1.0f) * dt;
+        float dir = Math.signum(player.getPosition().x - this.position.x);
+        this.position.x += dir * this.speed * (phase2 ? phase2SpeedMultiplier : 1.0f) * dt;
         // TODO: reemplazar por movimiento con física del proyecto si aplica
     }
 
@@ -180,7 +180,7 @@ public class IudexGundyr extends Enemy {
         if (a1_lungeStarted) {
             if (stateTimer <= a1_lungeDuration) {
                 float dir = facingRight ? 1f : -1f;
-                this.x += dir * a1_lungeSpeed * dt;
+                this.position.x += dir * a1_lungeSpeed * dt;
                 // generar (o mantener) hitbox frontal de lanza durante la lunge
                 createSpearHitbox(a1_damage, 80f, dir);
             } else {
@@ -241,7 +241,7 @@ public class IudexGundyr extends Enemy {
     private void updateAttack4(float dt, Player player) {
         if (stateTimer <= a4_duration) {
             // aplica empuje hacia fuera (alejar al player). El empuje se aplica una vez o durante un corto intervalo.
-            float dx = player.x - this.x;
+            float dx = player.getPosition().x - this.position.x;
             float dir = Math.signum(dx);
             applyPushToPlayer(player, dir * a4_pushForce);
             // No inflige daño.
@@ -257,7 +257,7 @@ public class IudexGundyr extends Enemy {
     }
 
     private boolean isPlayerBehind(Player player) {
-        boolean playerOnRight = player.x > this.x;
+        boolean playerOnRight = player.getPosition().x > this.position.x;
         return (facingRight && !playerOnRight) || (!facingRight && playerOnRight);
     }
 
@@ -295,7 +295,6 @@ public class IudexGundyr extends Enemy {
     }
 
     // --- Recepción de daño ---
-    @Override
     public void receiveDamage(float dmg) {
         this.health -= dmg;
         if (this.health <= 0f) {

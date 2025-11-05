@@ -19,12 +19,14 @@ public class Bonfire {
     private final BitmapFont font;
 
     private boolean playerNearby;
+    private boolean justRested; // se activa cuando el jugador guarda en esta hoguera
 
     public Bonfire(float x, float y) {
         this.position = new Vector2(x, y);
         this.activationRadius = 80f; // en píxeles
         this.font = new BitmapFont(); // fuente por defecto
         this.playerNearby = false;
+        this.justRested = false;
     }
 
     // Firma compatible con GameScreen: update(delta, player)
@@ -37,6 +39,7 @@ public class Bonfire {
 
         if (playerNearby && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
             SaveSystem.saveLastBonfire(player.getPosition().x, player.getPosition().y);
+            justRested = true; // notificar al GameScreen que se ha descansado en esta hoguera
         }
     }
 
@@ -45,6 +48,17 @@ public class Bonfire {
         // Mostrar prompt encima de la posición de la fogata
         String text = "Presiona E para guardar";
         font.draw(batch, text, position.x - 20, position.y + 40);
+    }
+
+    /**
+     * Devuelve true solo una vez después de descansar. Sirve para que GameScreen reaccione (curar y resetear enemigos).
+     */
+    public boolean consumeJustRested() {
+        if (justRested) {
+            justRested = false;
+            return true;
+        }
+        return false;
     }
 
     public Vector2 getPosition() {

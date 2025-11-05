@@ -16,6 +16,10 @@ public class Enemy extends Entity {
     private World world;
     private Player player; // referencia al jugador para detectarlo
 
+    // Posición inicial para poder respawnear al descansar en fogata
+    private float spawnX;
+    private float spawnY;
+
     // Textura 1x1 para dibujar barras con SpriteBatch (compartida)
     private static Texture whiteTex;
 
@@ -56,6 +60,9 @@ public class Enemy extends Entity {
         this.world = world;
         this.player = player;
         this.attackTexture = new Texture("enemy_attack.png"); // sprite de ataque
+        // Guardar spawn en píxeles
+        this.spawnX = x;
+        this.spawnY = y;
         createBody(x, y);
     }
 
@@ -312,6 +319,23 @@ public class Enemy extends Entity {
     public boolean isAttacking() { return isAttacking; }
     public boolean isPlayerDetected() { return playerDetected; }
     public Body getBody() { return body; }
+
+    // Reinicia el enemigo a su posición de aparición y restaura su estado
+    public void resetToSpawn() {
+        isDead = false;
+        setActive(true);
+        currentHealth = maxHealth;
+        // Teletransportar al spawn (en píxeles -> metros)
+        if (body != null) {
+            body.setLinearVelocity(0, 0);
+            body.setTransform(spawnX / Constants.PPM, spawnY / Constants.PPM, body.getAngle());
+        }
+        position.set(spawnX, spawnY);
+        isAttacking = false;
+        attackTimer = 0f;
+        attackCooldownTimer = 0f;
+        playerDetected = false;
+    }
 
     @Override
     public void dispose() {
