@@ -94,10 +94,10 @@ public class PauseOverlay {
         // escalar adicionalmente, podes volver a usar setFontScale().
         // resume.getLabel().setFontScale(2.0f);
 
-        // Resume: llama a método de GameScreen para despausar
+        // Resume: llama a método de GameScreen para despausar y teletransportar al último guardado si existe
         resume.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                gameScreen.resumeFromPause();
+                gameScreen.resumeFromPauseToLastSave();
             }
         });
 

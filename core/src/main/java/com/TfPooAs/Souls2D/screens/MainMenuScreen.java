@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.TfPooAs.Souls2D.systems.SaveSystem;
 
 public class MainMenuScreen implements Screen {
     private final Main game;
@@ -91,7 +92,7 @@ public class MainMenuScreen implements Screen {
 
         cont.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                game.gsm.showGameScreen();
+                game.gsm.showGameScreen(true);
             }
         });
 
@@ -108,7 +109,7 @@ public class MainMenuScreen implements Screen {
         });
 
         // Deshabilitar "Continuar" si no hay partida
-        cont.setDisabled(true);
+        cont.setDisabled(!SaveSystem.hasLastBonfire());
     }
 
     /** Genera las fuentes Garamond: título, subtítulo y botones. */

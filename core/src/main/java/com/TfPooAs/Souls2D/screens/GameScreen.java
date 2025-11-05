@@ -10,23 +10,35 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.math.Rectangle;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
 import com.TfPooAs.Souls2D.entities.Player;
+import com.TfPooAs.Souls2D.entities.items.Bonfire;
+import com.TfPooAs.Souls2D.entities.npcs.FireKeeper;
 import com.TfPooAs.Souls2D.world.ParallaxBackground;
+import com.TfPooAs.Souls2D.systems.SaveSystem;
 
 public class GameScreen implements Screen {
 
     private final Main game;
+    private boolean startAtLastSave; // default false
     private OrthographicCamera camera;
     private FitViewport viewport;
     private SpriteBatch batch;
     private Box2DDebugRenderer debugRenderer;
 
     private ParallaxBackground parallax;
+    // Entities loaded from Tiled
+    private java.util.ArrayList<Bonfire> bonfires = new java.util.ArrayList<>();
+    private java.util.ArrayList<FireKeeper> fireKeepers = new java.util.ArrayList<>();
 
     private final int VIRTUAL_WIDTH = 1920;
     private final int VIRTUAL_HEIGHT = 1080;
@@ -46,7 +58,17 @@ public class GameScreen implements Screen {
 
     public GameScreen(Main game) {
         this.game = game;
+        this.startAtLastSave = false;
+        init();
+    }
 
+    public GameScreen(Main game, boolean startAtLastSave) {
+        this.game = game;
+        this.startAtLastSave = startAtLastSave;
+        init();
+    }
+
+    private void init() {
         camera = new OrthographicCamera();
         viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
         viewport.apply();
@@ -60,6 +82,10 @@ public class GameScreen implements Screen {
         // Cargar mapa y colisiones
         levelLoader = new LevelLoader(world, "maps/cemetery.tmx");
         tileMapRenderer = new TileMapRenderer(levelLoader.getMap());
+
+        // Cargar Bonfires y NPCs (FireKeeper) desde el mapa si existen las capas
+        loadBonfiresFromMap();
+        loadNPCsFromMap();
 
         // Contact listener
         world.setContactListener(new ContactListener() {
@@ -104,9 +130,47 @@ public class GameScreen implements Screen {
         parallax = new ParallaxBackground(layers, speeds, camera);
     }
 
+    private void loadBonfiresFromMap() {
+        MapLayer layer = levelLoader.getMap().getLayers().get("Bonfires");
+        if (layer == null) {
+            Gdx.app.log("GameScreen", "Layer 'Bonfires' no encontrada. Continuando sin hogueras.");
+            return;
+        }
+        MapObjects objects = layer.getObjects();
+        for (MapObject mo : objects) {
+            if (mo instanceof RectangleMapObject) {
+                Rectangle rect = ((RectangleMapObject) mo).getRectangle();
+                bonfires.add(new Bonfire(rect.x, rect.y));
+            }
+        }
+    }
+
+    private void loadNPCsFromMap() {
+        MapLayer layer = levelLoader.getMap().getLayers().get("NPCs");
+        if (layer == null) {
+            Gdx.app.log("GameScreen", "Layer 'NPCs' no encontrada. Continuando sin NPCs.");
+            return;
+        }
+        MapObjects objects = layer.getObjects();
+        for (MapObject mo : objects) {
+            if (mo instanceof RectangleMapObject) {
+                Rectangle rect = ((RectangleMapObject) mo).getRectangle();
+                // En el futuro, leer propiedad 'type' para diferentes NPCs
+                fireKeepers.add(new FireKeeper(rect.x, rect.y));
+            }
+        }
+    }
+
     @Override
     public void show() {
         if (player == null) player = new Player(world, 200, 300);
+        if (startAtLastSave && SaveSystem.hasLastBonfire()) {
+            float[] pos = SaveSystem.loadLastBonfire();
+            if (pos != null) {
+                player.teleportToPixels(pos[0], pos[1]);
+                Gdx.app.log("GameScreen", "Spawned at last bonfire from main menu: (" + pos[0] + ", " + pos[1] + ")");
+            }
+        }
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
     }
@@ -132,6 +196,13 @@ public class GameScreen implements Screen {
         if (!isPaused && !isDeathShown) {
             world.step(1 / 60f, 6, 2);
             if (player != null) player.update(delta);
+            // Actualizar entidades del mapa
+            for (Bonfire b : bonfires) {
+                b.update(delta, player);
+            }
+            for (FireKeeper fk : fireKeepers) {
+                fk.update(delta);
+            }
         }
 
         // --- Actualizar cámara ---
@@ -156,6 +227,9 @@ public class GameScreen implements Screen {
         tileMapRenderer.render(camera);
 
         batch.begin();
+        // Render entidades del mapa
+        for (Bonfire b : bonfires) b.render(batch);
+        for (FireKeeper fk : fireKeepers) fk.render(batch);
         if (player != null) player.render(batch);
         batch.end();
 
@@ -188,6 +262,25 @@ public class GameScreen implements Screen {
         Gdx.input.setInputProcessor(null);
     }
 
+    // Resume and teleport player to last bonfire if a save exists
+    public void resumeFromPauseToLastSave() {
+        if (!isPaused) return;
+        try {
+            float[] pos = SaveSystem.loadLastBonfire();
+            if (pos != null && player != null) {
+                player.teleportToPixels(pos[0], pos[1]);
+                Gdx.app.log("GameScreen", "Teleported player to last bonfire: (" + pos[0] + ", " + pos[1] + ")");
+            } else {
+                Gdx.app.log("GameScreen", "No saved bonfire. Resuming without teleport.");
+            }
+        } catch (Exception e) {
+            Gdx.app.error("GameScreen", "Failed to resume to last save: " + e.getMessage(), e);
+        }
+        isPaused = false;
+        if (pauseOverlay != null) pauseOverlay.hide();
+        Gdx.input.setInputProcessor(null);
+    }
+
     public Main getGame() { return game; }
     public boolean isPaused() { return isPaused; }
 
@@ -207,5 +300,9 @@ public class GameScreen implements Screen {
         debugRenderer.dispose();
         if (pauseOverlay != null) pauseOverlay.dispose();
         if (deathOverlay != null) deathOverlay.dispose();
+        for (Bonfire b : bonfires) b.dispose();
+        for (FireKeeper fk : fireKeepers) fk.dispose();
+        bonfires.clear();
+        fireKeepers.clear();
     }
 }

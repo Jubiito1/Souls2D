@@ -47,6 +47,10 @@ public class GameScreenManager {
         setActiveScreenNormal(new GameScreen(game));
     }
 
+    public void showGameScreen(boolean startAtLastSave) {
+        setActiveScreenNormal(new GameScreen(game, startAtLastSave));
+    }
+
     public void showMainMenu() {
         setActiveScreenNormal(new MainMenuScreen(game));
     }

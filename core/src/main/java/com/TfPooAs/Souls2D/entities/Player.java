@@ -86,6 +86,16 @@ public class Player extends Entity {
         }
     }
 
+    // Teletransporta al jugador a coordenadas en píxeles (tomadas como esquina inferior izquierda del sprite)
+    public void teleportToPixels(float pixelX, float pixelY) {
+        float centerX = (pixelX + width / 2f) / Constants.PPM;
+        float centerY = (pixelY + height / 2f) / Constants.PPM;
+        body.setTransform(centerX, centerY, 0f);
+        body.setLinearVelocity(0f, 0f);
+        // Actualizar también la posición visual inmediata
+        this.position.set(pixelX, pixelY);
+    }
+
     @Override
     public void render(SpriteBatch batch) {
         batch.draw(texture, position.x, position.y, width, height);
