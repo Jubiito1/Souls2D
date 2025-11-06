@@ -1,4 +1,5 @@
 .gitkeep
+arrow_shoot.wav
 backgrounds/mountains.png
 backgrounds/sky.png
 backgrounds/trees.png
@@ -13,15 +14,22 @@ enemy-idle.png
 enemy-walk.png
 enemy2-attack.png
 enemy2-walk.png
+enemy_slash.wav
 estus.png
 flecha.png
 hoguera.png
+hurt.wav
+jump.wav
 maps/cemetery.tmx
 maps/tilemapeardo.png
 maps/tilemapeardo.tsx
 maps/tilemapeardo2.png
 maps/tilemapeardo2.tsx
+menu.wav
 musica.wav
+pausa.wav
+roll.wav
+slash_player.wav
 ui/Garamond.otf
 ui/font-list.fnt
 ui/font-subtitle.fnt
@@ -33,3 +41,4 @@ ui/pause_header.png
 ui/uiskin.atlas
 ui/uiskin.json
 ui/uiskin.png
+walk.wav

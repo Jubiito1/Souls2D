@@ -420,6 +420,8 @@ public class GameScreen implements Screen {
         if (!isPaused) return;
         isPaused = false;
         if (pauseOverlay != null) pauseOverlay.hide();
+        // Resume background music when unpausing (if not in death screen)
+        if (!isDeathShown) SoundManager.resumeBackground();
         Gdx.input.setInputProcessor(null);
     }
 
@@ -439,6 +441,8 @@ public class GameScreen implements Screen {
         }
         isPaused = false;
         if (pauseOverlay != null) pauseOverlay.hide();
+        // Resume background music as we leave pause (unless death overlay is active)
+        if (!isDeathShown) SoundManager.resumeBackground();
         Gdx.input.setInputProcessor(null);
     }
 
