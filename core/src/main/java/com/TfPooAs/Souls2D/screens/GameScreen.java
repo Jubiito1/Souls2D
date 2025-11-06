@@ -69,7 +69,7 @@ public class GameScreen implements Screen {
     // Boss
     private IudexGundyr boss;
     // Coordenadas de spawn del boss (ajustables)
-    private float bossSpawnX = 1500f;
+    private float bossSpawnX = 10500f;
     private float bossSpawnY = 2170f;
 
 
@@ -233,7 +233,7 @@ public class GameScreen implements Screen {
     public void show() {
 
 
-        if (player == null) player = new Player(world, 1200, 2170);
+        if (player == null) player = new Player(world, 5800, 2370);
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
@@ -253,11 +253,14 @@ public class GameScreen implements Screen {
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
-                //{1600, 2170},
-                //{2100, 2170},
+                {1600, 2170},
+                {2100, 2170},
 
-                //{2600, 3170},
-                {3200, 2170},
+                {2600, 3170},
+
+                {3700, 2170},
+                {4500, 2170},
+                {5800, 2570},
             };
             for (float[] sp : spawnPoints) {
                 Enemy e = new Enemy(world, sp[0], sp[1], player);
@@ -270,8 +273,11 @@ public class GameScreen implements Screen {
         // Crear enemigos a distancia (Enemy2) una sola vez
         if (rangedEnemies.isEmpty()) {
             float[][] spawnPoints2 = new float[][]{
-                //{1900, 2170},
+                {1900, 2170},
                 {3450, 2170},
+                {4000, 2470},
+
+
             };
             for (float[] sp : spawnPoints2) {
                 Enemy2 e2 = new Enemy2(world, sp[0], sp[1], player, enemyProjectiles);
@@ -287,7 +293,7 @@ public class GameScreen implements Screen {
 
         // Crear Boss si aún no existe
         if (boss == null && player != null) {
-            boss = new IudexGundyr(world, bossSpawnX, bossSpawnY, player);
+            boss = new IudexGundyr(world, 7500, 2170, player);
             enemies.add(boss);
             player.addEnemy(boss);
         }

@@ -28,15 +28,15 @@ import com.TfPooAs.Souls2D.systems.SoundManager;
 public class IudexGundyr extends Enemy {
 
     // === Configuración del Boss ===
-    private int MAX_HP = 400;
+    private int MAX_HP = 600;
     private int hp = MAX_HP;
 
     // Escala visual del boss (más grande que enemigos normales)
     private float SCALE = 1f; // Aumentado un poco más
 
     // Rangos de ataque (aumentados por hitbox más grande)
-    private float ATTACK1_RANGE = 50f; // Aumentado
-    private float ATTACK2_RANGE = 60f; // Aumentado
+    private float ATTACK1_RANGE = 80f; // Aumentado
+    private float ATTACK2_RANGE = 90f; // Aumentado
 
     // Daño de ataques
     private int ATTACK1_DAMAGE = 35;
