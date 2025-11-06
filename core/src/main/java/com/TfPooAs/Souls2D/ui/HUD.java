@@ -140,9 +140,6 @@ public class HUD {
             uiBatch.setColor(Color.WHITE);
         }
 
-        // Texto de vida (opcional)
-        font.setColor(0.9f, 0.9f, 0.9f, 0.85f);
-        font.draw(uiBatch, "Vida: " + player.getCurrentHealth() + "/" + player.getMaxHealth(), hpX + 10f, hpY + ALTO_BARRA_VIDA - 6f);
 
         // Número de Estus centrado debajo del icono
         String numeroEstus = String.valueOf(cargas);

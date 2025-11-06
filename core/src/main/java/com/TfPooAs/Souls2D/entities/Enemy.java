@@ -1,4 +1,3 @@
-
 package com.TfPooAs.Souls2D.entities;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -52,10 +51,10 @@ public class Enemy extends Entity {
     private final float JUMP_COOLDOWN_TIME = 1f; // tiempo entre saltos
 
     public Enemy(World world, float x, float y, Player player) {
-        super(x, y, "enemy.png"); // sprite base del enemigo
+        super(x, y, "enemy-attack.png"); // sprite base del enemigo
         this.world = world;
         this.player = player;
-        this.attackTexture = new Texture("enemy_attack.png"); // sprite de ataque
+        this.attackTexture = new Texture("enemy-attack.png"); // sprite de ataque
         createBody(x, y);
     }
 

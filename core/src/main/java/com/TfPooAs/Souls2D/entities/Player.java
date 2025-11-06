@@ -89,7 +89,7 @@ public class Player extends Entity {
     private Array<Enemy> enemies;
 
     public Player(World world, float x, float y) {
-        super(x, y, "player.png");
+        super(x, y, "caballeroIdle-Sheet.png");
         this.world = world;
         this.enemies = new Array<>();
 

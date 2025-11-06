@@ -45,7 +45,7 @@ public class GameScreen implements Screen {
 
     private Background parallax;
     // Entities loaded from Tiled
-    private java.util.ArrayList<Bonfire> bonfires = new java.util.ArrayList<>();
+    private java.util.List<Bonfire> bonfires;
     private java.util.ArrayList<FireKeeper> fireKeepers = new java.util.ArrayList<>();
 
     private final int VIRTUAL_WIDTH = 1920;
@@ -60,6 +60,7 @@ public class GameScreen implements Screen {
     private Enemy enemy;
     private HUD hud;
 
+
     // Overlays
     private PauseOverlay pauseOverlay;
     private boolean isPaused = false;
@@ -70,6 +71,7 @@ public class GameScreen implements Screen {
         this.game = game;
         this.startAtLastSave = false;
         init();
+
     }
 
     public GameScreen(Main game, boolean startAtLastSave) {
@@ -102,9 +104,10 @@ public class GameScreen implements Screen {
         // Cargar mapa y colisiones
         levelLoader = new LevelLoader(world, "maps/cemetery.tmx");
         tileMapRenderer = new TileMapRenderer(levelLoader.getMap());
+        bonfires = levelLoader.getBonfires();
 
         // Cargar Bonfires y NPCs (FireKeeper) desde el mapa si existen las capas
-        loadBonfiresFromMap();
+
         loadNPCsFromMap();
 
         // Contact listener
@@ -152,21 +155,6 @@ public class GameScreen implements Screen {
         parallax = new Background(layers, speeds, camera);
     }
 
-    private void loadBonfiresFromMap() {
-        MapLayer layer = levelLoader.getMap().getLayers().get("Bonfires");
-        if (layer == null) {
-            Gdx.app.log("GameScreen", "Layer 'Bonfires' no encontrada. Continuando sin hogueras.");
-            return;
-        }
-        MapObjects objects = layer.getObjects();
-        for (MapObject mo : objects) {
-            if (mo instanceof RectangleMapObject) {
-                Rectangle rect = ((RectangleMapObject) mo).getRectangle();
-                bonfires.add(new Bonfire(rect.x, rect.y));
-            }
-        }
-    }
-
     private void loadNPCsFromMap() {
         MapLayer layer = levelLoader.getMap().getLayers().get("NPCs");
         if (layer == null) {
@@ -185,7 +173,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        if (player == null) player = new Player(world, 200, 750);
+
+        if (player == null) player = new Player(world, 1200, 750);
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {
             float[] pos = SaveSystem.loadLastBonfire();
             if (pos != null) {
@@ -198,15 +187,17 @@ public class GameScreen implements Screen {
 
         // Crear enemy → lo colocamos después de crear el player
         if (enemy == null) {
-            enemy = new Enemy(world, 300, 750, player);
+            enemy = new Enemy(world, 1300, 750, player);
             // si tu Player necesita registro del enemy para ataques/detección:
             if (player != null) player.addEnemy(enemy);
         }
+
 
         // Crear HUD después de instanciar el player (y opcionalmente el enemy)
         if (hud == null) {
             hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
         }
+
     }
 
     @Override

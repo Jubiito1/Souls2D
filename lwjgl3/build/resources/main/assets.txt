@@ -8,8 +8,8 @@ caballeroIdle-Sheet.png
 caballeroJump-Sheet.png
 caballeroRoll-Sheet.png
 caballeroWalk-Sheet.png
-enemy.png
-enemy_attack.png
+enemy-attack.png
+enemy-walk.png
 estus.png
 hoguera.png
 maps/cemetery.tmx
@@ -17,8 +17,6 @@ maps/tilemapeardo.png
 maps/tilemapeardo.tsx
 maps/tilemapeardo2.png
 maps/tilemapeardo2.tsx
-player.png
-player_attack.png
 ui/Garamond.otf
 ui/font-list.fnt
 ui/font-subtitle.fnt

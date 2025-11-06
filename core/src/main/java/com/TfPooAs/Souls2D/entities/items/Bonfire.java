@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector2;
  * Fogata estilo Dark Souls: cuando el jugador se acerca, aparece un aviso para presionar E y guardar.
  * Clase ligera sin dependencia de Item; cumple con el uso en GameScreen.
  */
+
 public class Bonfire {
 
     private final Vector2 position;
