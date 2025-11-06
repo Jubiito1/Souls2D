@@ -15,7 +15,7 @@ public abstract class NPC extends Entity {
 
     public NPC(float x, float y) {
         // Conveniencia: textura por defecto para no agregar nuevos assets
-        this(x, y, "player.png");
+        this(x, y, "firekeeper-Sheet.png");
     }
 
     /** Por defecto los NPC no hacen nada en update */

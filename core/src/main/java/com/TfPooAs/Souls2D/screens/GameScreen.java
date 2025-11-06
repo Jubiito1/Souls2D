@@ -233,7 +233,7 @@ public class GameScreen implements Screen {
     public void show() {
 
 
-        if (player == null) player = new Player(world, 5800, 2370);
+        if (player == null) player = new Player(world, 9800, 2670);
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
@@ -250,6 +250,7 @@ public class GameScreen implements Screen {
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
 
+        fireKeepers.add(new FireKeeper(10000, 2419)); // X,Y donde quieras que aparezca
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
@@ -286,6 +287,8 @@ public class GameScreen implements Screen {
                 if (player != null) player.addRangedEnemy(e2);
             }
         }
+
+
 
 
 
@@ -339,7 +342,7 @@ public class GameScreen implements Screen {
                 b.update(delta, player);
             }
             for (FireKeeper fk : fireKeepers) {
-                fk.update(delta);
+                fk.update(delta, player);
             }
             // Actualizar enemigos melee
             for (int i = enemies.size() - 1; i >= 0; i--) {

@@ -18,6 +18,7 @@ enemy2-attack.png
 enemy2-walk.png
 enemy_slash.wav
 estus.png
+firekeeper-Sheet.png
 flecha.png
 gundyrAtaque-Sheet.png
 gundyrAtaque2-Sheet.png
