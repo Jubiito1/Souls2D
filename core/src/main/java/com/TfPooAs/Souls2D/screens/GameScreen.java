@@ -19,6 +19,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.TfPooAs.Souls2D.entities.Enemy;
 import com.TfPooAs.Souls2D.entities.Enemy2;
 import com.TfPooAs.Souls2D.entities.EnemyProjectile;
+import com.TfPooAs.Souls2D.entities.enemies.IudexGundyr;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
@@ -65,6 +66,11 @@ public class GameScreen implements Screen {
     private java.util.List<Enemy2> rangedEnemies = new java.util.ArrayList<>();
     private java.util.List<EnemyProjectile> enemyProjectiles = new java.util.ArrayList<>();
     private HUD hud;
+    // Boss
+    private IudexGundyr boss;
+    // Coordenadas de spawn del boss (ajustables)
+    private float bossSpawnX = 10500f;
+    private float bossSpawnY = 2170f;
 
 
     // Overlays
@@ -227,7 +233,7 @@ public class GameScreen implements Screen {
     public void show() {
 
 
-        if (player == null) player = new Player(world, 1200, 2170);
+        if (player == null) player = new Player(world, 5800, 2370);
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
@@ -251,7 +257,10 @@ public class GameScreen implements Screen {
                 {2100, 2170},
 
                 {2600, 3170},
-                {3200, 2170},
+
+                {3700, 2170},
+                {4500, 2170},
+                {5800, 2570},
             };
             for (float[] sp : spawnPoints) {
                 Enemy e = new Enemy(world, sp[0], sp[1], player);
@@ -266,6 +275,9 @@ public class GameScreen implements Screen {
             float[][] spawnPoints2 = new float[][]{
                 {1900, 2170},
                 {3450, 2170},
+                {4000, 2470},
+
+
             };
             for (float[] sp : spawnPoints2) {
                 Enemy2 e2 = new Enemy2(world, sp[0], sp[1], player, enemyProjectiles);
@@ -279,9 +291,20 @@ public class GameScreen implements Screen {
 
 
 
+        // Crear Boss si aún no existe
+        if (boss == null && player != null) {
+            boss = new IudexGundyr(world, 7500, 2170, player);
+            enemies.add(boss);
+            player.addEnemy(boss);
+        }
+
         // Crear HUD después de instanciar el player (y opcionalmente el enemy)
         if (hud == null) {
-            hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
+            hud = new HUD(player);
+        }
+        // Vincular Boss a la HUD para barra inferior
+        if (hud != null && boss != null) {
+            hud.setBoss(boss);
         }
 
     }

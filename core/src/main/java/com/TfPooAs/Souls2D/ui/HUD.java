@@ -1,6 +1,7 @@
 package com.TfPooAs.Souls2D.ui;
 
 import com.TfPooAs.Souls2D.entities.Player;
+import com.TfPooAs.Souls2D.entities.Enemy;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -32,6 +33,11 @@ public class HUD {
     // Icono de Estus
     private static final float TAM_ESTUS = 64f; // cuadrado
     private static final float SEPARACION_ESTUS_TEXTO = 8f; // espacio entre icono y número
+
+    // Boss bar configs
+    private static final float ANCHO_BARRA_BOSS = 900f;
+    private static final float ALTO_BARRA_BOSS = 28f;
+    private static final float MARGEN_INFERIOR_BOSS = 40f;
 
     public HUD(Player player) {
         this.player = player;
@@ -115,11 +121,28 @@ public class HUD {
                 shapes.setColor(new Color(0.35f, 0.35f, 0.35f, 1f));
             }
             shapes.rect(estusX, estusY, TAM_ESTUS, TAM_ESTUS);
-            shapes.end();
-        } else {
-            // Terminar shapes antes de dibujar con batch
-            shapes.end();
         }
+
+        // === Barra de vida del Boss (inferior, centrada) ===
+        if (boss != null && boss.isActive() && !boss.isDead() && isBossCloseEnough()) {
+            float barX = (uiCamera.viewportWidth - ANCHO_BARRA_BOSS) / 2f;
+            float barY = MARGEN_INFERIOR_BOSS;
+            // panel
+            shapes.setColor(new Color(0f, 0f, 0f, 0.65f));
+            shapes.rect(barX - 6, barY - 6, ANCHO_BARRA_BOSS + 12, ALTO_BARRA_BOSS + 12);
+            // borde
+            shapes.setColor(new Color(0.15f, 0.15f, 0.15f, 1f));
+            shapes.rect(barX - 3, barY - 3, ANCHO_BARRA_BOSS + 6, ALTO_BARRA_BOSS + 6);
+            // fondo interior
+            shapes.setColor(new Color(0.07f, 0.07f, 0.07f, 1f));
+            shapes.rect(barX, barY, ANCHO_BARRA_BOSS, ALTO_BARRA_BOSS);
+            // relleno vida boss
+            float bossRatio = Math.max(0f, Math.min(1f, (float) boss.getCurrentHealth() / (float) boss.getMaxHealth()));
+            shapes.setColor(new Color(0.80f, 0.12f, 0.12f, 1f));
+            shapes.rect(barX, barY, ANCHO_BARRA_BOSS * bossRatio, ALTO_BARRA_BOSS);
+        }
+        // cerrar shapes antes de batch
+        shapes.end();
 
         // Dibujar icono/ textos con el batch de UI
         uiBatch.setProjectionMatrix(uiCamera.combined);
@@ -140,7 +163,6 @@ public class HUD {
             uiBatch.setColor(Color.WHITE);
         }
 
-
         // Número de Estus centrado debajo del icono
         String numeroEstus = String.valueOf(cargas);
         layout.setText(font, numeroEstus);
@@ -148,9 +170,33 @@ public class HUD {
         float numeroY = estusY - SEPARACION_ESTUS_TEXTO; // debajo del icono
         font.setColor(Color.WHITE);
         font.draw(uiBatch, numeroEstus, numeroX, numeroY);
+
+        // Texto del Boss centrado sobre la barra (si visible)
+        if (boss != null && boss.isActive() && !boss.isDead() && isBossCloseEnough()) {
+            String bossName = "Iudex Gundyr";
+            layout.setText(font, bossName);
+            float textX = (uiCamera.viewportWidth - layout.width) / 2f;
+            float textY = MARGEN_INFERIOR_BOSS + ALTO_BARRA_BOSS + 22f;
+            font.setColor(Color.WHITE);
+            font.draw(uiBatch, bossName, textX, textY);
+        }
+
         uiBatch.end();
         // Reset de color para no afectar a otros renders
         uiBatch.setColor(Color.WHITE);
+    }
+
+    // === Boss binding ===
+    private Enemy boss;
+    public void setBoss(Enemy boss) { this.boss = boss; }
+    private boolean isBossCloseEnough() {
+        if (boss == null || player == null) return false;
+        // distancia euclidiana en coordenadas de mundo (pixeles visuales)
+        float dx = boss.getPosition().x - player.getPosition().x;
+        float dy = boss.getPosition().y - player.getPosition().y;
+        float dist2 = dx*dx + dy*dy;
+        float max = 800f; // umbral configurable de proximidad visual
+        return dist2 <= max*max;
     }
 
     public void dispose() {
