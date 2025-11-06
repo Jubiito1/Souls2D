@@ -99,7 +99,7 @@ public class PauseOverlay {
         btnStyle.font = garamondButtonFont;
 
         TextButton resume = new TextButton("Continuar", btnStyle);
-        TextButton options = new TextButton("Opciones", btnStyle);
+        TextButton options = new TextButton("Audio", btnStyle);
         TextButton quit = new TextButton("Salir al menú", btnStyle);
 
         // Si antes escalabas con setFontScale(2f), ahora en general no hace falta

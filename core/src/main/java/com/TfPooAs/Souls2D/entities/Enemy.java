@@ -60,21 +60,30 @@ public class Enemy extends Entity {
     private Texture walkSheetTexture;
     private Texture attackSheetTexture;
 
+    // Timers de animación
+    private float stateTime = 0f;      // para idle/caminar
+    // attackTimer ya existe arriba y se usa para el ataque
+
+    // Dirección bloqueada durante el ataque
+    private int attackDirection = 1;   // -1 izquierda, 1 derecha
+
 
     public Enemy(World world, float x, float y, Player player) {
-        super(x, y, "enemy-attack.png");
+        super(x, y, "enemy-idle.png");
         this.world = world;
         this.player = player;
         this.attackTexture = new Texture("enemy-attack.png");
 
         // === Animaciones ===
+        // Idle (una sola imagen)
         AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
-            "enemy-idle.png", 4, 1, 0.12f, Animation.PlayMode.LOOP);
+            "enemy-idle.png", 1, 1, 0.2f, Animation.PlayMode.LOOP);
         if (idlePair != null) {
             this.idleAnim = idlePair.animation;
             this.idleSheetTexture = idlePair.texture;
         }
 
+        // Ataque (11 columnas)
         AnimationUtils.AnimWithTexture attackPair = AnimationUtils.createFromSpritesheetIfExists(
             "enemy-attack.png", 11, 1, 0.07f, Animation.PlayMode.NORMAL);
         if (attackPair != null) {
@@ -82,6 +91,7 @@ public class Enemy extends Entity {
             this.attackSheetTexture = attackPair.texture;
         }
 
+        // Caminar (4 columnas)
         AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
             "enemy-walk.png", 4, 1, 0.10f, Animation.PlayMode.LOOP);
         if (walkPair != null) {
@@ -116,8 +126,8 @@ public class Enemy extends Entity {
 
         // === Definir tamaño físico exacto (en píxeles del sprite) ===
         // Si tu enemigo mide 64x64 píxeles en el sprite
-        float spriteWidth = 75f;
-        float spriteHeight = 64f;
+        float spriteWidth = 62f;
+        float spriteHeight = 59f;
 
         // Convertir de píxeles a metros (Box2D usa metros)
         float halfW = (spriteWidth / 2f) / Constants.PPM;
@@ -142,6 +152,9 @@ public class Enemy extends Entity {
     public void update(float delta) {
         if (isDead) return;
 
+        // Avanzar timers de animación
+        stateTime += delta;
+
         updateTimers(delta);
         detectPlayer();
         updateAI(delta);
@@ -158,7 +171,9 @@ public class Enemy extends Entity {
         // Actualizar timer de ataque
         if (isAttacking) {
             attackTimer += delta;
-            if (attackTimer >= ATTACK_DURATION) {
+            boolean finishedByAnim = (attackAnim != null) && attackAnim.isAnimationFinished(attackTimer);
+            boolean finishedByTime = attackTimer >= ATTACK_DURATION; // respaldo por si no hay anim
+            if (finishedByAnim || finishedByTime) {
                 endAttack();
             }
         }
@@ -183,10 +198,12 @@ public class Enemy extends Entity {
         float distanceToPlayer = getDistanceToPlayer();
         playerDetected = distanceToPlayer <= DETECTION_RANGE;
 
-        // Actualizar dirección hacia el jugador
+        // Actualizar dirección hacia el jugador (no cambiar durante un ataque)
         if (playerDetected) {
             Vector2 playerPos = player.getPosition();
-            facingRight = playerPos.x > position.x;
+            if (!isAttacking) {
+                facingRight = playerPos.x > position.x;
+            }
         }
     }
 
@@ -259,13 +276,16 @@ public class Enemy extends Entity {
 
     private void startAttack() {
         isAttacking = true;
-        attackTimer = 0f;
+        attackTimer = 0f; // reiniciar anim de ataque
         attackCooldownTimer = ATTACK_COOLDOWN;
 
-        // Dash hacia el jugador (más controlado)
+        // Bloquear dirección al inicio del ataque
         Vector2 playerPos = player.getPosition();
-        float direction = playerPos.x > position.x ? 1 : -1;
-        body.setLinearVelocity(direction * ATTACK_FORCE, body.getLinearVelocity().y);
+        attackDirection = playerPos.x > position.x ? 1 : -1;
+        facingRight = attackDirection == 1;
+
+        // Dash hacia el jugador (más controlado) usando la dirección bloqueada
+        body.setLinearVelocity(attackDirection * ATTACK_FORCE, body.getLinearVelocity().y);
 
         System.out.println("¡Enemigo atacando!");
     }
@@ -312,23 +332,21 @@ public class Enemy extends Entity {
         if (!active || isDead) return;
 
         TextureRegion currentFrame;
-        float stateTime = (System.currentTimeMillis() % 100000) / 1000f;
 
-
-        if (isAttacking && attackAnim != null)
-            currentFrame = attackAnim.getKeyFrame(stateTime, false);
-        else if (playerDetected && walkAnim != null)
-            currentFrame = walkAnim.getKeyFrame(stateTime, true);
-        else if (idleAnim != null)
-            currentFrame = idleAnim.getKeyFrame(stateTime, true);
-        else
+        if (isAttacking && attackAnim != null) {
+            currentFrame = attackAnim.getKeyFrame(attackTimer);
+        } else if (playerDetected && walkAnim != null) {
+            currentFrame = walkAnim.getKeyFrame(stateTime);
+        } else if (idleAnim != null) {
+            currentFrame = idleAnim.getKeyFrame(stateTime);
+        } else {
             currentFrame = new TextureRegion(texture);
+        }
 
-        if (facingRight)
+        if (!facingRight)
             batch.draw(currentFrame, position.x, position.y, width, height);
         else
             batch.draw(currentFrame, position.x + width, position.y, -width, height);
-
 
         // === Barra de vida encima del enemigo ===
         // Lazy-init de textura blanca 1x1 para rectángulos

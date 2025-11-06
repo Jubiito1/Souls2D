@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="320" height="45" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="483">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="320" height="45" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="508">
  <tileset firstgid="1" source="tilemapeardo.tsx"/>
  <tileset firstgid="226" source="tilemapeardo2.tsx"/>
  <layer id="3" name="Capa de patrones 2" width="320" height="45">
@@ -107,7 +107,7 @@
   <object id="472" name="bonfire" x="1632.18" y="768.182" width="31.8182" height="31.4545"/>
  </objectgroup>
  <objectgroup id="6" name="Collisions">
-  <object id="18" x="1152" y="744" width="192" height="24"/>
+  <object id="18" x="1090.5" y="744" width="253.5" height="24"/>
   <object id="20" x="1344" y="736">
    <polygon points="0.0117188,8.00781 128.004,73.6433 128,96 0,32"/>
   </object>
@@ -627,7 +627,6 @@
   <object id="476" x="5634.67" y="960.667" width="30.6667" height="478.667"/>
   <object id="477" x="8414.67" y="960.667" width="31.3333" height="480"/>
   <object id="478" x="8576" y="960.667" width="32.6667" height="478.667"/>
-  <object id="480" x="1090" y="743.5" width="61" height="25.5"/>
   <object id="481" x="1090" y="0" width="25" height="744"/>
  </objectgroup>
 </map>

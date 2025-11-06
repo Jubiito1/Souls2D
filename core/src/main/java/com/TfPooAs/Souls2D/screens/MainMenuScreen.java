@@ -68,7 +68,7 @@ public class MainMenuScreen implements Screen {
         // Crear botones con estilo nuevo
         TextButton newGame = new TextButton("Nueva Partida", garamondButtonStyle);
         TextButton cont = new TextButton("Continuar", garamondButtonStyle);
-        TextButton options = new TextButton("Opciones", garamondButtonStyle);
+        TextButton options = new TextButton("Audio", garamondButtonStyle);
         TextButton exit = new TextButton("Salir", garamondButtonStyle);
 
         // Ajustar tamaño

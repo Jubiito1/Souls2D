@@ -193,6 +193,8 @@ public class GameScreen implements Screen {
         }
 
 
+
+
         // Crear HUD después de instanciar el player (y opcionalmente el enemy)
         if (hud == null) {
             hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
