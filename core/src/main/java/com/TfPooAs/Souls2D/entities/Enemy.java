@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 
 import com.TfPooAs.Souls2D.utils.Constants;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 
 
 public class Enemy extends Entity {
@@ -286,6 +287,9 @@ public class Enemy extends Entity {
 
         // Dash hacia el jugador (más controlado) usando la dirección bloqueada
         body.setLinearVelocity(attackDirection * ATTACK_FORCE, body.getLinearVelocity().y);
+
+        // SFX: slash del enemigo
+        SoundManager.playSfx("assets/enemy_slash.wav");
 
         System.out.println("¡Enemigo atacando!");
     }

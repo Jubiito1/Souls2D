@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.Array;
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.utils.AnimationUtils;
 import com.TfPooAs.Souls2D.entities.Enemy2;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 
 public class Player extends Entity {
     private Body body;
@@ -308,6 +309,16 @@ public class Player extends Entity {
         // Reaplicar la velocidad limitada al cuerpo
         body.setLinearVelocity(velocity);
 
+        // === Audio de caminar ===
+        try {
+            boolean movingHoriz = Math.abs(body.getLinearVelocity().x) > 0.08f;
+            // Debe sonar si se mueve en una dirección y está tocando el piso
+            if (isGrounded && movingHoriz && !isRolling && !isAttacking) {
+                SoundManager.ensureLooping("assets/walk.wav");
+            } else {
+                SoundManager.stopLoop("assets/walk.wav");
+            }
+        } catch (Exception ignored) { }
 
         // Sincronizar posición visual con posición del cuerpo
         position.set(
@@ -377,6 +388,7 @@ public class Player extends Entity {
             if (canSpendPercent(STAM_COST_JUMP)) {
                 spendStaminaPercent(STAM_COST_JUMP);
                 body.applyLinearImpulse(new Vector2(0, jumpForce), body.getWorldCenter(), true);
+                SoundManager.playSfx("assets/jump.wav");
             } else {
                 // sin stamina suficiente, no salta
             }
@@ -431,6 +443,9 @@ public class Player extends Entity {
         Vector2 vel = body.getLinearVelocity();
         float dir = facingRight ? 1f : -1f;
         body.setLinearVelocity(dir * ROLL_SPEED, vel.y);
+
+        // SFX: roll
+        SoundManager.playSfx("assets/roll.wav");
 
         // Reducir hitbox a la mitad de alto manteniendo los pies a la misma altura.
         recreateFixtureForCurrentState();
@@ -518,6 +533,9 @@ public class Player extends Entity {
         float dir = facingRight ? 1f : -1f;
         // Establecemos velocidad horizontal hacia delante por un corto periodo
         body.setLinearVelocity(dir * attackLungeSpeed, vel.y);
+
+        // SFX: slash del jugador
+        SoundManager.playSfx("assets/slash_player.wav");
 
         System.out.println("¡Atacando!");
     }
@@ -685,7 +703,10 @@ public class Player extends Entity {
             return;
         }
 
+        if (damage <= 0) return;
         currentHealth -= damage;
+        // SFX hurt cuando la vida disminuye
+        try { SoundManager.playSfx("assets/hurt.wav"); } catch (Exception ignored) { }
         if (currentHealth <= 0) {
             currentHealth = 0;
             isDead = true;
@@ -708,7 +729,10 @@ public class Player extends Entity {
     // Aplica daño de caída ignorando i-frames de rodar (ya consideramos reducción antes)
     private void applyFallDamage(int damage) {
         if (isDead) return;
+        if (damage <= 0) return;
         currentHealth -= damage;
+        // SFX hurt también por daño de caída
+        try { SoundManager.playSfx("assets/hurt.wav"); } catch (Exception ignored) { }
         if (currentHealth <= 0) {
             currentHealth = 0;
             isDead = true;

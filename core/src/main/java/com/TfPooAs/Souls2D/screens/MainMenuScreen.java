@@ -16,6 +16,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.TfPooAs.Souls2D.systems.SaveSystem;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 
 public class MainMenuScreen implements Screen {
     private final Main game;
@@ -142,6 +143,8 @@ public class MainMenuScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
+        // Play menu background music (loop). Safe if file is missing.
+        SoundManager.playBackground("assets/menu.wav", true);
     }
 
     @Override
@@ -157,9 +160,9 @@ public class MainMenuScreen implements Screen {
         stage.getViewport().update(width, height, true);
     }
 
-    @Override public void pause() {}
-    @Override public void resume() {}
-    @Override public void hide() {}
+    @Override public void pause() { SoundManager.pauseBackground(); }
+    @Override public void resume() { SoundManager.resumeBackground(); }
+    @Override public void hide() { SoundManager.stopBackground(); }
 
     @Override
     public void dispose() {

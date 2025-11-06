@@ -1,6 +1,7 @@
 package com.TfPooAs.Souls2D.screens;
 
 import com.TfPooAs.Souls2D.core.Main;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -165,13 +166,19 @@ public class PauseOverlay {
         // Actualizamos viewport al mostrar
         stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         Gdx.input.setInputProcessor(stage);
+        // Iniciar música/loop de pausa
+        try { SoundManager.ensureLooping("assets/pausa.wav"); } catch (Exception ignored) {}
     }
 
     public void hide() {
         Gdx.input.setInputProcessor(null); // o el InputProcessor del juego si lo tenés
+        // Detener música/loop de pausa al ocultar
+        try { SoundManager.stopLoop("assets/pausa.wav"); } catch (Exception ignored) {}
     }
 
     public void dispose() {
+        // Asegurar detener el loop de pausa si seguía activo
+        try { SoundManager.stopLoop("assets/pausa.wav"); } catch (Exception ignored) {}
         stage.dispose();
         skin.dispose();
         dimTexture.dispose();

@@ -2,6 +2,7 @@ package com.TfPooAs.Souls2D.entities;
 
 import com.TfPooAs.Souls2D.utils.AnimationUtils;
 import com.TfPooAs.Souls2D.utils.Constants;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -182,6 +183,8 @@ public class Enemy2 extends Entity {
         isAttacking = true;
         attackTimer = 0f;
         shootCooldownTimer = SHOOT_COOLDOWN;
+        // SFX: disparo de flecha
+        try { SoundManager.playSfx("assets/arrow_shoot.wav"); } catch (Exception ignored) { }
 
         // CALCULAR DIRECCIÓN HACIA EL JUGADOR (en lugar de solo horizontal)
         float enemyCenterX = position.x + width / 2f;
