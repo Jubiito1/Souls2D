@@ -23,8 +23,8 @@ public class Enemy extends Entity {
     private static Texture whiteTex;
 
     // === Sistema de vida ===
-    private int maxHealth = 50;
-    private int currentHealth = 50;
+    private int maxHealth = 70;
+    private int currentHealth = 70;
     private boolean isDead = false;
 
     // === Físicas similares al jugador ===

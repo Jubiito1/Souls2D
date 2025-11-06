@@ -25,7 +25,7 @@ public class LevelLoader {
         this.world = world;
         this.map = new TmxMapLoader().load(mapPath);
         parseCollisions();
-        parseInteractables(); // 🔥 lee hogueras y otros objetos
+        parseInteractables(); //  lee hogueras
     }
 
     private void parseCollisions() {
@@ -51,7 +51,8 @@ public class LevelLoader {
                 fdef.friction = 0.8f;
                 fdef.restitution = 0f;
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
-                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY;
+                // AGREGADO: Ahora el suelo también colisiona con proyectiles
+                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY | Constants.BIT_PROJECTILE;
 
                 body.createFixture(fdef).setUserData("ground");
                 shape.dispose();
@@ -90,7 +91,9 @@ public class LevelLoader {
                 fdef.friction = 0.8f;
                 fdef.restitution = 0f;
                 fdef.filter.categoryBits = Constants.BIT_GROUND;
-                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY;
+                // AGREGADO: Ahora el suelo también colisiona con proyectiles
+                fdef.filter.maskBits = Constants.BIT_PLAYER | Constants.BIT_ENEMY | Constants.BIT_PROJECTILE;
+
                 body.createFixture(fdef).setUserData("ground");
                 shape.dispose();
             }

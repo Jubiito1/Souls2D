@@ -1,8 +1,6 @@
 .gitkeep
 arrow_shoot.wav
-backgrounds/mountains.png
-backgrounds/sky.png
-backgrounds/trees.png
+backgrounds/fondo.png
 caballeroAtaque-Sheet.png
 caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png
@@ -25,9 +23,7 @@ maps/tilemapeardo.png
 maps/tilemapeardo.tsx
 maps/tilemapeardo2.png
 maps/tilemapeardo2.tsx
-menu.wav
 musica.wav
-pausa.wav
 roll.wav
 slash_player.wav
 ui/Garamond.otf

@@ -28,8 +28,8 @@ public class Enemy2 extends Entity {
     private static Texture whiteTex;
 
     // Vida
-    private int maxHealth = 40;
-    private int currentHealth = 40;
+    private int maxHealth = 30;
+    private int currentHealth = 30;
     private boolean isDead = false;
 
     // Estados
@@ -39,12 +39,12 @@ public class Enemy2 extends Entity {
 
     // IA y disparo
     private final float DETECTION_RANGE = 500f; // píxeles
-    private final float MIN_SHOOT_DISTANCE = 140f; // no dispara demasiado cerca
+    private final float MIN_SHOOT_DISTANCE = 0f; // no dispara demasiado cerca
     private final float MOVE_SPEED = 0.15f; // se reposiciona suavemente
-    private final float SHOOT_COOLDOWN = 1.6f;
+    private final float SHOOT_COOLDOWN = 3f;
     private float shootCooldownTimer = 0f;
-    private final int PROJECTILE_DAMAGE = 12;
-    private final float PROJECTILE_SPEED = 6.5f; // unidades Box2D m/s
+    private final int PROJECTILE_DAMAGE = 25;
+    private final float PROJECTILE_SPEED = 5f; // unidades Box2D m/s
     private final float PROJECTILE_LIFETIME = 4.0f;
 
     // Animaciones
