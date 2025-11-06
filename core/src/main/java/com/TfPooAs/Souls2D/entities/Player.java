@@ -22,6 +22,20 @@ public class Player extends Entity {
     private float maxHorizontalSpeed = 1.7f; // velocidad máxima horizontal (en unidades Box2D)
     private boolean isGrounded = true;
 
+    // === Daño por caída ===
+    // Velocidad vertical segura (m/s Box2D). Impactos por debajo no hacen daño.
+    private float FALL_SAFE_SPEED = 6.0f;
+    // Escala de daño: daño por cada m/s por encima de FALL_SAFE_SPEED
+    private float FALL_DAMAGE_SCALE = 5.0f;
+    // Tope de daño por caída
+    private int FALL_MAX_DAMAGE = 70;
+    // Reducción de daño si estabas rodando en el instante del impacto (0.5 = 50%)
+    private float FALL_ROLL_REDUCTION = 0.5f;
+    // Seguimiento del estado en el aire
+    private boolean wasAirborne = false;
+    private float minAirborneVelY = 0f; // velocidad Y más negativa alcanzada durante la caída
+    private boolean rolledDuringFall = false; // si roló en cualquier momento de la caída
+
     // === Sistema de vida ===
     private int maxHealth = 100;
     private int currentHealth = 100;
@@ -37,7 +51,7 @@ public class Player extends Entity {
     // Costes (como porcentaje de la barra máxima)
     private float STAM_COST_ROLL = 25f;   // %
     private float STAM_COST_ATTACK = 15f; // %
-    private float STAM_COST_JUMP = 10f;   // %
+    private float STAM_COST_JUMP = 0f;   // %
 
     // === Sistema de ataque ===
     private Texture attackTexture;
@@ -248,6 +262,19 @@ public class Player extends Entity {
         updateAttack(delta);
         updateHealing(delta);
         updateStamina(delta);
+
+        // Seguimiento de caída mientras está en el aire
+        if (!isGrounded) {
+            Vector2 v = body.getLinearVelocity();
+            // Registrar la velocidad Y mínima (más negativa) alcanzada
+            if (!wasAirborne) {
+                wasAirborne = true;
+                minAirborneVelY = 0f;
+                rolledDuringFall = isRolling;
+            }
+            if (v.y < minAirborneVelY) minAirborneVelY = v.y;
+            if (isRolling) rolledDuringFall = true;
+        }
 
         // Timer de salto/aire
         if (Math.abs(body.getLinearVelocity().y) > 0.05f) {
@@ -515,6 +542,10 @@ public class Player extends Entity {
         float centerY = (pixelY + height / 2f) / Constants.PPM;
         body.setTransform(centerX, centerY, 0f);
         body.setLinearVelocity(0f, 0f);
+        // Resetear trackers de caída para evitar daño falso tras teletransportes
+        wasAirborne = false;
+        minAirborneVelY = 0f;
+        rolledDuringFall = false;
         // Actualizar también la posición visual inmediata
         this.position.set(pixelX, pixelY);
     }
@@ -634,9 +665,26 @@ public class Player extends Entity {
         System.out.println("Player se curó " + healAmount + " puntos. Vida: " + currentHealth + "/" + maxHealth);
     }
 
+    // Aplica daño de caída ignorando i-frames de rodar (ya consideramos reducción antes)
+    private void applyFallDamage(int damage) {
+        if (isDead) return;
+        currentHealth -= damage;
+        if (currentHealth <= 0) {
+            currentHealth = 0;
+            isDead = true;
+            System.out.println("¡Player murió por daño de caída! (" + damage + ")");
+        } else {
+            System.out.println("Daño de caída: " + damage + ". Vida: " + currentHealth + "/" + maxHealth);
+        }
+    }
+
     public void revive() {
         isDead = false;
         currentHealth = maxHealth;
+        // Resetear trackers de caída al revivir
+        wasAirborne = false;
+        minAirborneVelY = 0f;
+        rolledDuringFall = false;
         System.out.println("¡Player ha revivido!");
     }
 
@@ -653,7 +701,36 @@ public class Player extends Entity {
     public int getMaxStamina() { return Math.round(maxStamina); }
 
     public void setGrounded(boolean grounded) {
+        boolean wasGroundedBefore = this.isGrounded;
         this.isGrounded = grounded;
+
+        // Detectar aterrizaje (transición aire -> suelo)
+        if (grounded && !wasGroundedBefore && wasAirborne) {
+            float impactSpeed = -minAirborneVelY; // velocidad positiva
+            int damage = 0;
+            if (impactSpeed > FALL_SAFE_SPEED) {
+                float over = impactSpeed - FALL_SAFE_SPEED;
+                float scaled = over * FALL_DAMAGE_SCALE;
+                if (rolledDuringFall) {
+                    scaled *= (1f - FALL_ROLL_REDUCTION);
+                }
+                damage = Math.min(FALL_MAX_DAMAGE, Math.max(0, Math.round(scaled)));
+            }
+            if (damage > 0 && !isDead) {
+                applyFallDamage(damage);
+            }
+            // Reset trackers tras el aterrizaje
+            wasAirborne = false;
+            minAirborneVelY = 0f;
+            rolledDuringFall = false;
+        }
+
+        // Si se marcó como no grounded, comienza la fase aérea
+        if (!grounded && wasGroundedBefore) {
+            wasAirborne = false; // se activará en update() al detectar !isGrounded
+            minAirborneVelY = 0f;
+            rolledDuringFall = false;
+        }
     }
 
     public Body getBody() {

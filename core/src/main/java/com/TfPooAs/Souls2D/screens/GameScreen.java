@@ -192,7 +192,7 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
 
-        if (player == null) player = new Player(world, 1200, 750);
+        if (player == null) player = new Player(world, 1200, 2170);
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {
             float[] pos = SaveSystem.loadLastBonfire();
             if (pos != null) {
@@ -206,10 +206,11 @@ public class GameScreen implements Screen {
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
-                {1300, 750},
-                {1600, 750},
-                {1900, 750},
-                {2200, 750}
+                {1600, 2170},
+                {1900, 2170},
+                {2100, 2170},
+                {2600, 3170},
+                {3200, 2170},
             };
             for (float[] sp : spawnPoints) {
                 Enemy e = new Enemy(world, sp[0], sp[1], player);

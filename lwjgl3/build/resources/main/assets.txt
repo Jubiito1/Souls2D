@@ -11,6 +11,8 @@ caballeroWalk-Sheet.png
 enemy-attack.png
 enemy-idle.png
 enemy-walk.png
+enemy2-attack.png
+enemy2-walk.png
 estus.png
 hoguera.png
 maps/cemetery.tmx
