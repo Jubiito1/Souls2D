@@ -294,6 +294,8 @@ public class GameScreen implements Screen {
             if (deathOverlay != null) deathOverlay.show();
             // Pause background music when death screen shows
             SoundManager.pauseBackground();
+            // Play death SFX once when death menu appears
+            try { SoundManager.playSfx("assets/death.wav"); } catch (Exception ignored) { }
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
