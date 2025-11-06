@@ -1,3 +1,4 @@
+
 package com.TfPooAs.Souls2D.entities;
 
 import com.TfPooAs.Souls2D.utils.Constants;
@@ -7,12 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 
-/**
- * Proyectil simple disparado por enemigos a distancia.
- * - Sin gravedad (gravityScale = 0)
- * - Colisiona con suelo y jugador
- * - Al impactar se marca para eliminar
- */
+
 public class EnemyProjectile extends Entity {
     private final World world;
     private Body body;
@@ -21,7 +17,9 @@ public class EnemyProjectile extends Entity {
     private float lifeTime;
     private boolean dead = false;
 
-    // Render básico (textura blanca 1x1 tintada por el batch del juego si se desea)
+    // Textura del proyectil - usa una imagen específica
+    private static Texture projectileTexture;
+    // Fallback: textura blanca 1x1 si no se encuentra la imagen
     private static Texture whiteTex;
 
     public EnemyProjectile(World world, float startXpx, float startYpx, float dirX, float dirY,
@@ -31,9 +29,34 @@ public class EnemyProjectile extends Entity {
         this.speed = speed;
         this.damage = damage;
         this.lifeTime = lifeTime;
-        // tamaño visual sencillo (en pixeles)
-        this.width = 12f;
-        this.height = 4f;
+
+        // Cargar textura del proyectil si no está cargada
+        if (projectileTexture == null) {
+            try {
+                // CAMBIAR "proyectil.png" por el nombre de tu archivo de imagen
+                projectileTexture = new Texture("flecha.png");
+            } catch (Exception e) {
+                // Si no se encuentra la imagen, usar fallback
+                projectileTexture = null;
+                System.out.println("No se pudo cargar 'proyectil.png', usando textura blanca como fallback");
+            }
+        }
+
+        // Ajustar tamaño según la textura cargada
+        if (projectileTexture != null) {
+            this.width = projectileTexture.getWidth();
+            this.height = projectileTexture.getHeight();
+            // Opcional: escalar si la imagen es muy grande
+            if (width > 32 || height > 32) {
+                float scale = Math.min(32f / width, 32f / height);
+                this.width = width * scale;
+                this.height = height * scale;
+            }
+        } else {
+            // tamaño visual sencillo (en pixeles) si no hay textura
+            this.width = 12f;
+            this.height = 4f;
+        }
 
         createBody(startXpx, startYpx, dirX, dirY);
     }
@@ -89,14 +112,21 @@ public class EnemyProjectile extends Entity {
     @Override
     public void render(SpriteBatch batch) {
         if (dead) return;
-        if (whiteTex == null) {
-            Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-            pm.setColor(1, 1, 1, 1);
-            pm.fill();
-            whiteTex = new Texture(pm);
-            pm.dispose();
+
+        // Usar la textura del proyectil si está disponible
+        if (projectileTexture != null) {
+            batch.draw(projectileTexture, position.x, position.y, width, height);
+        } else {
+            // Fallback a textura blanca si no se pudo cargar la imagen
+            if (whiteTex == null) {
+                Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+                pm.setColor(1, 0.5f, 0, 1); // Color naranja para distinguir de otros elementos
+                pm.fill();
+                whiteTex = new Texture(pm);
+                pm.dispose();
+            }
+            batch.draw(whiteTex, position.x, position.y, width, height);
         }
-        batch.draw(whiteTex, position.x, position.y, width, height);
     }
 
     public Body getBody() { return body; }
@@ -110,6 +140,19 @@ public class EnemyProjectile extends Entity {
         if (body != null && world != null) {
             world.destroyBody(body);
             body = null;
+        }
+        // No disponer la textura estática aquí ya que es compartida
+    }
+
+    // Método estático para limpiar recursos cuando ya no se necesiten
+    public static void disposeStaticResources() {
+        if (projectileTexture != null) {
+            projectileTexture.dispose();
+            projectileTexture = null;
+        }
+        if (whiteTex != null) {
+            whiteTex.dispose();
+            whiteTex = null;
         }
     }
 }
