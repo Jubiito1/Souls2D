@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.Array;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.utils.AnimationUtils;
+import com.TfPooAs.Souls2D.entities.Enemy2;
 
 public class Player extends Entity {
     private Body body;

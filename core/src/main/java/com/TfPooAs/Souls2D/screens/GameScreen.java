@@ -17,6 +17,8 @@ import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
 import com.TfPooAs.Souls2D.entities.Enemy;
+import com.TfPooAs.Souls2D.entities.Enemy2;
+import com.TfPooAs.Souls2D.entities.EnemyProjectile;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
@@ -59,6 +61,9 @@ public class GameScreen implements Screen {
 
     private Player player;
     private java.util.List<Enemy> enemies = new java.util.ArrayList<>();
+    // Nuevo: enemigos a distancia y proyectiles
+    private java.util.List<Enemy2> rangedEnemies = new java.util.ArrayList<>();
+    private java.util.List<EnemyProjectile> enemyProjectiles = new java.util.ArrayList<>();
     private HUD hud;
 
 
@@ -124,7 +129,7 @@ public class GameScreen implements Screen {
                     if (player != null) player.setGrounded(true);
                 }
 
-                // Enemy vs Ground
+                // Enemy vs Ground (aplica a enemigos melee y a distancia)
                 if (("enemy".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
                     ("enemy".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
                     Body enemyBody = "enemy".equals(a.getUserData()) ? a.getBody() : b.getBody();
@@ -133,6 +138,28 @@ public class GameScreen implements Screen {
                             e.setGrounded(true);
                             break;
                         }
+                    }
+                    for (Enemy2 e2 : rangedEnemies) {
+                        if (e2.getBody() == enemyBody) {
+                            e2.setGrounded(true);
+                            break;
+                        }
+                    }
+                }
+
+                // Proyectil enemigo colisiona con jugador o suelo
+                if (("enemyProjectile".equals(a.getUserData()) && ("player".equals(b.getUserData()) || "ground".equals(b.getUserData()))) ||
+                    ("enemyProjectile".equals(b.getUserData()) && ("player".equals(a.getUserData()) || "ground".equals(a.getUserData())))) {
+                    Fixture projFix = "enemyProjectile".equals(a.getUserData()) ? a : b;
+                    Fixture otherFix = projFix == a ? b : a;
+                    Body projBody = projFix.getBody();
+                    Object ud = projBody.getUserData();
+                    if (ud instanceof EnemyProjectile) {
+                        EnemyProjectile proj = (EnemyProjectile) ud;
+                        if ("player".equals(otherFix.getUserData()) && player != null && !player.isDead()) {
+                            player.takeDamage(proj.getDamage());
+                        }
+                        proj.markForRemoval();
                     }
                 }
             }
@@ -148,13 +175,19 @@ public class GameScreen implements Screen {
                     if (player != null) player.setGrounded(false);
                 }
 
-                // Enemy vs Ground
+                // Enemy vs Ground (aplica a enemigos melee y a distancia)
                 if (("enemy".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
                     ("enemy".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
                     Body enemyBody = "enemy".equals(a.getUserData()) ? a.getBody() : b.getBody();
                     for (Enemy e : enemies) {
                         if (e.getBody() == enemyBody) {
                             e.setGrounded(false);
+                            break;
+                        }
+                    }
+                    for (Enemy2 e2 : rangedEnemies) {
+                        if (e2.getBody() == enemyBody) {
+                            e2.setGrounded(false);
                             break;
                         }
                     }
@@ -165,7 +198,7 @@ public class GameScreen implements Screen {
             @Override public void postSolve(Contact contact, ContactImpulse impulse) {}
         });
 
-        // --- Fondo Parallax ---
+
         Texture fondo = new Texture("backgrounds/fondo.png");
 
         Texture[] layers = { fondo };
@@ -226,6 +259,18 @@ public class GameScreen implements Screen {
             }
         }
 
+        // Crear enemigos a distancia (Enemy2) una sola vez
+        if (rangedEnemies.isEmpty()) {
+            float[][] spawnPoints2 = new float[][]{
+                {2300, 2170},
+                {3450, 2170},
+            };
+            for (float[] sp : spawnPoints2) {
+                Enemy2 e2 = new Enemy2(world, sp[0], sp[1], player, enemyProjectiles);
+                rangedEnemies.add(e2);
+            }
+        }
+
 
 
 
@@ -266,7 +311,7 @@ public class GameScreen implements Screen {
             for (FireKeeper fk : fireKeepers) {
                 fk.update(delta);
             }
-            // Actualizar enemigos
+            // Actualizar enemigos melee
             for (int i = enemies.size() - 1; i >= 0; i--) {
                 Enemy e = enemies.get(i);
                 e.update(delta);
@@ -275,6 +320,24 @@ public class GameScreen implements Screen {
                     if (player != null) player.removeEnemy(e);
                     e.dispose();
                     enemies.remove(i);
+                }
+            }
+            // Actualizar enemigos a distancia
+            for (int i = rangedEnemies.size() - 1; i >= 0; i--) {
+                Enemy2 e2 = rangedEnemies.get(i);
+                e2.update(delta);
+                if (e2.isDead()) {
+                    e2.dispose();
+                    rangedEnemies.remove(i);
+                }
+            }
+            // Actualizar proyectiles enemigos
+            for (int i = enemyProjectiles.size() - 1; i >= 0; i--) {
+                EnemyProjectile p = enemyProjectiles.get(i);
+                p.update(delta);
+                if (p.isDead()) {
+                    p.dispose();
+                    enemyProjectiles.remove(i);
                 }
             }
         }
@@ -296,7 +359,7 @@ public class GameScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        parallax.render(batch); // 👈 Fondo primero
+        parallax.render(batch);
         batch.end();
 
         // Luego mapa y entidades
@@ -307,7 +370,9 @@ public class GameScreen implements Screen {
         for (Bonfire b : bonfires) b.render(batch);
         for (FireKeeper fk : fireKeepers) fk.render(batch);
         if (player != null) player.render(batch);
-        for (Enemy e : enemies) e.render(batch); // render de todos los enemigos
+        for (Enemy e : enemies) e.render(batch); // enemigos melee
+        for (Enemy2 e2 : rangedEnemies) e2.render(batch); // enemigos a distancia
+        for (EnemyProjectile p : enemyProjectiles) p.render(batch); // proyectiles enemigos
         batch.end();
 
         // Debug opcional
@@ -399,6 +464,10 @@ public class GameScreen implements Screen {
         if (player != null) player.dispose();
         for (Enemy e : enemies) e.dispose();
         enemies.clear();
+        for (Enemy2 e2 : rangedEnemies) e2.dispose();
+        rangedEnemies.clear();
+        for (EnemyProjectile p : enemyProjectiles) p.dispose();
+        enemyProjectiles.clear();
         if (hud != null) hud.dispose();
     }
 }

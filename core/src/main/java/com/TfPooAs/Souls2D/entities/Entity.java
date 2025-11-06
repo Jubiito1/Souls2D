@@ -17,6 +17,19 @@ public abstract class Entity {
         this.height = texture.getHeight();
     }
 
+    // Constructor alternativo para entidades que crean su propia textura o no usan textura
+    public Entity(float x, float y, Texture texture) {
+        this.position = new Vector2(x, y);
+        this.texture = texture;
+        if (texture != null) {
+            this.width = texture.getWidth();
+            this.height = texture.getHeight();
+        } else {
+            this.width = 0f;
+            this.height = 0f;
+        }
+    }
+
     // Método para actualizar la lógica
     public abstract void update(float delta);
 
