@@ -57,7 +57,7 @@ public class GameScreen implements Screen {
     private TileMapRenderer tileMapRenderer;
 
     private Player player;
-    private Enemy enemy;
+    private java.util.List<Enemy> enemies = new java.util.ArrayList<>();
     private HUD hud;
 
 
@@ -117,15 +117,23 @@ public class GameScreen implements Screen {
                 Fixture a = contact.getFixtureA();
                 Fixture b = contact.getFixtureB();
 
-                if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                    b.getUserData() != null && b.getUserData().equals("ground")) ||
-                    (b.getUserData() != null && b.getUserData().equals("player") &&
-                        a.getUserData() != null && a.getUserData().equals("ground"))) {
+                // Player vs Ground
+                if (("player".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
+                    ("player".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
                     if (player != null) player.setGrounded(true);
                 }
 
-                // si quieres detectar colisiones del enemy con suelo en el futuro,
-                // aquí podrías agregar detección similar para "enemy"
+                // Enemy vs Ground
+                if (("enemy".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
+                    ("enemy".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
+                    Body enemyBody = "enemy".equals(a.getUserData()) ? a.getBody() : b.getBody();
+                    for (Enemy e : enemies) {
+                        if (e.getBody() == enemyBody) {
+                            e.setGrounded(true);
+                            break;
+                        }
+                    }
+                }
             }
 
             @Override
@@ -133,12 +141,22 @@ public class GameScreen implements Screen {
                 Fixture a = contact.getFixtureA();
                 Fixture b = contact.getFixtureB();
 
-                if ((a.getUserData() != null && a.getUserData().equals("player") &&
-                    b.getUserData() != null && b.getUserData().equals("ground")) ||
-                    (b.getUserData() != null && b.getUserData().equals("player") &&
-                        a.getUserData() != null && a.getUserData().equals("ground"))) {
-                    if (player != null)
-                        player.setGrounded(false);
+                // Player vs Ground
+                if (("player".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
+                    ("player".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
+                    if (player != null) player.setGrounded(false);
+                }
+
+                // Enemy vs Ground
+                if (("enemy".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
+                    ("enemy".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
+                    Body enemyBody = "enemy".equals(a.getUserData()) ? a.getBody() : b.getBody();
+                    for (Enemy e : enemies) {
+                        if (e.getBody() == enemyBody) {
+                            e.setGrounded(false);
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -185,11 +203,19 @@ public class GameScreen implements Screen {
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
 
-        // Crear enemy → lo colocamos después de crear el player
-        if (enemy == null) {
-            enemy = new Enemy(world, 1300, 750, player);
-            // si tu Player necesita registro del enemy para ataques/detección:
-            if (player != null) player.addEnemy(enemy);
+        // Crear varios enemigos después de crear el player (solo una vez)
+        if (enemies.isEmpty()) {
+            float[][] spawnPoints = new float[][]{
+                {1300, 750},
+                {1600, 750},
+                {1900, 750},
+                {2200, 750}
+            };
+            for (float[] sp : spawnPoints) {
+                Enemy e = new Enemy(world, sp[0], sp[1], player);
+                enemies.add(e);
+                if (player != null) player.addEnemy(e);
+            }
         }
 
 
@@ -228,7 +254,17 @@ public class GameScreen implements Screen {
             for (FireKeeper fk : fireKeepers) {
                 fk.update(delta);
             }
-            if (enemy != null) enemy.update(delta); // actualizar enemy también
+            // Actualizar enemigos
+            for (int i = enemies.size() - 1; i >= 0; i--) {
+                Enemy e = enemies.get(i);
+                e.update(delta);
+                if (e.isDead()) {
+                    // Quitar enemigos muertos
+                    if (player != null) player.removeEnemy(e);
+                    e.dispose();
+                    enemies.remove(i);
+                }
+            }
         }
 
         // --- Actualizar cámara ---
@@ -259,7 +295,7 @@ public class GameScreen implements Screen {
         for (Bonfire b : bonfires) b.render(batch);
         for (FireKeeper fk : fireKeepers) fk.render(batch);
         if (player != null) player.render(batch);
-        if (enemy != null) enemy.render(batch); // render del enemy en el mundo
+        for (Enemy e : enemies) e.render(batch); // render de todos los enemigos
         batch.end();
 
         // Debug opcional
@@ -347,7 +383,8 @@ public class GameScreen implements Screen {
         bonfires.clear();
         fireKeepers.clear();
         if (player != null) player.dispose();
-        if (enemy != null) enemy.dispose();
+        for (Enemy e : enemies) e.dispose();
+        enemies.clear();
         if (hud != null) hud.dispose();
     }
 }
