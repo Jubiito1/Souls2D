@@ -49,11 +49,20 @@ public class OptionsMenu implements Screen {
         t.setFillParent(true);
         t.center();
 
-        // Estilo de título
+        // === Escalado responsivo ===
+        float scaleX = Gdx.graphics.getWidth() / 1920f;
+        float scaleY = Gdx.graphics.getHeight() / 1080f;
+        float scale = Math.min(scaleX, scaleY); // Mantiene proporción
+        float baseBtnW = 220f * scale;
+        float baseBtnH = 60f * scale;
+        float baseWidth = 300f * scale;
+        float basePad = 20f * scale;
+
+        // === Estilo de título ===
         Label.LabelStyle titleStyle = new Label.LabelStyle(garamondTitleFont, Color.WHITE);
         Label title = new Label("Opciones", titleStyle);
 
-        // Slider (no usa fuente, se deja con skin)
+        // === Slider de volumen ===
         Slider music = new Slider(0f, 1f, 0.01f, false, skin);
         music.setValue(prefs.getFloat("musicVolume", 1f));
         music.addListener(new ChangeListener() {
@@ -63,10 +72,10 @@ public class OptionsMenu implements Screen {
             }
         });
 
-        // Estilo para labels normales
+        // === Estilo de labels ===
         Label.LabelStyle labelStyle = new Label.LabelStyle(garamondLabelFont, Color.WHITE);
 
-        // Estilo de botones con Garamond
+        // === Estilo de botones ===
         TextButtonStyle baseStyle = null;
         try {
             baseStyle = skin.get(TextButtonStyle.class);
@@ -92,13 +101,14 @@ public class OptionsMenu implements Screen {
             }
         });
 
-        t.add(title).padBottom(20);
+        // === Organización ===
+        t.add(title).padBottom(basePad);
         t.row();
-        t.add(new Label("Volumen música", labelStyle)).padBottom(6);
+        t.add(new Label("Volumen música", labelStyle)).padBottom(6f * scale);
         t.row();
-        t.add(music).width(300).padBottom(12);
+        t.add(music).width(baseWidth).padBottom(12f * scale);
         t.row();
-        t.add(back).width(220).height(60);
+        t.add(back).width(baseBtnW).height(baseBtnH);
 
         stage.addActor(t);
     }
@@ -108,16 +118,19 @@ public class OptionsMenu implements Screen {
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
             FreeTypeFontGenerator.FreeTypeFontParameter param = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
-            // Título grande
-            param.size = 80;
+            // Escalado de fuentes responsivo
+            float scaleX = Gdx.graphics.getWidth() / 1920f;
+            float scaleY = Gdx.graphics.getHeight() / 1080f;
+            float scale = Math.min(scaleX, scaleY);
+
+            // Tamaños relativos
+            param.size = Math.round(80 * scale);
             garamondTitleFont = generator.generateFont(param);
 
-            // Labels medianos
-            param.size = 36;
+            param.size = Math.round(36 * scale);
             garamondLabelFont = generator.generateFont(param);
 
-            // Botones más grandes
-            param.size = 48;
+            param.size = Math.round(48 * scale);
             garamondButtonFont = generator.generateFont(param);
 
             generator.dispose();

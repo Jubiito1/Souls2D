@@ -18,22 +18,20 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 /**
- * DeathOverlay: Overlay de UI que se dibuja sobre GameScreen al morir.
- * Muestra un título grande centrado "HAS MUERTO" y dos botones:
- *  - Reintentar: reinicia la partida (vuelve a cargar GameScreen)
- *  - Volver al menú principal
- *
- * Ahora usa Adobe Garamond Bold (bitmap generado en runtime) para título y botones.
+ * DeathOverlay responsive: Se adapta automáticamente al tamaño de pantalla.
  */
 public class DeathOverlay {
     private final Stage stage;
     private final Skin skin;
-    private final Texture dimTexture; // 1x1 para dimming
+    private final Texture dimTexture;
     private final GameScreen gameScreen;
 
-    // Fuentes Garamond
     private BitmapFont garamondTitleFont;
     private BitmapFont garamondButtonFont;
+
+    // Guardamos dimensiones para escalar
+    private float screenWidth;
+    private float screenHeight;
 
     public DeathOverlay(Main game, GameScreen gameScreen) {
         this.gameScreen = gameScreen;
@@ -41,31 +39,33 @@ public class DeathOverlay {
         this.skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         this.dimTexture = create1x1Texture();
 
+        updateScreenSize();
         generateFonts();
         buildUI(game);
     }
 
+    private void updateScreenSize() {
+        screenWidth = Gdx.graphics.getWidth();
+        screenHeight = Gdx.graphics.getHeight();
+    }
+
     private void generateFonts() {
         try {
-            // Ruta esperada: core/assets/fonts/AdobeGaramond-Bold.otf
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
                 Gdx.files.internal("assets/ui/Garamond.otf"));
-            FreeTypeFontGenerator.FreeTypeFontParameter param = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            FreeTypeFontGenerator.FreeTypeFontParameter param =
+                new FreeTypeFontGenerator.FreeTypeFontParameter();
 
-            // Fuente para el título (muy grande)
-            param.size = 120; // ajustá si querés más/menos
-            param.spaceX = 0;
-            param.spaceY = 0;
+            // Ajustamos el tamaño proporcionalmente a la altura de pantalla
+            param.size = (int)(screenHeight * 0.12f); // título ≈ 12% de altura
             garamondTitleFont = generator.generateFont(param);
 
-            // Fuente para los botones / labels (más chica)
-            param.size = 48; // ajustá según cómo se vea en tus botones
+            param.size = (int)(screenHeight * 0.05f); // botones ≈ 5% de altura
             garamondButtonFont = generator.generateFont(param);
 
             generator.dispose();
         } catch (Exception e) {
             Gdx.app.error("DeathOverlay", "No se pudo generar Garamond: " + e.getMessage());
-            // Fallback a fuente por defecto para evitar crashes
             garamondTitleFont = new BitmapFont();
             garamondButtonFont = new BitmapFont();
         }
@@ -76,16 +76,13 @@ public class DeathOverlay {
         root.setFillParent(true);
         root.center();
 
-        // Estilo de label (título) usando Garamond grande
         Label.LabelStyle titleStyle = new Label.LabelStyle(garamondTitleFont, Color.RED);
         Label title = new Label("HAS MUERTO", titleStyle);
-        // NO usamos setFontScale gigantesco; ya controlamos por size al generar la fuente.
 
-        // Estilo de botones: clonamos drawables del skin si existen; si no, dejamos sin fondo
         TextButtonStyle baseStyle = null;
         try {
             baseStyle = skin.get(TextButtonStyle.class);
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {}
 
         TextButtonStyle garamondBtnStyle = new TextButtonStyle();
         if (baseStyle != null) {
@@ -96,7 +93,6 @@ public class DeathOverlay {
             garamondBtnStyle.disabled = baseStyle.disabled;
             garamondBtnStyle.fontColor = baseStyle.fontColor;
         } else {
-            // Si no hay drawables en el skin, definimos al menos un fontColor
             garamondBtnStyle.fontColor = Color.WHITE;
         }
         garamondBtnStyle.font = garamondButtonFont;
@@ -104,10 +100,6 @@ public class DeathOverlay {
         TextButton retry = new TextButton("Reintentar", garamondBtnStyle);
         TextButton toMenu = new TextButton("Menú principal", garamondBtnStyle);
 
-        // Si antes escalabas texto en labels de botones, ya no hace falta:
-        // retry.getLabel().setFontScale(2.0f);
-
-        // Listeners
         retry.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
                 game.gsm.showGameScreen(true);
@@ -120,8 +112,13 @@ public class DeathOverlay {
             }
         });
 
-        float btnW = 400f, btnH = 64f, pad = 14f;
-        root.add(title).padBottom(40f);
+        // Escalamos botones proporcionalmente
+        float btnW = screenWidth * 0.35f;
+        float btnH = screenHeight * 0.08f;
+        float pad = screenHeight * 0.015f;
+        float titlePadBottom = screenHeight * 0.06f;
+
+        root.add(title).padBottom(titlePadBottom);
         root.row();
         root.add(retry).width(btnW).height(btnH).pad(pad);
         root.row();
@@ -131,8 +128,14 @@ public class DeathOverlay {
     }
 
     public void render(float delta) {
+        // Si la pantalla cambia de tamaño, se ajusta
+        if (screenWidth != Gdx.graphics.getWidth() || screenHeight != Gdx.graphics.getHeight()) {
+            stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+            updateScreenSize();
+        }
+
         stage.act(delta);
-        // Dimming desactivado
+
         stage.getBatch().begin();
         stage.getBatch().setColor(0f, 0f, 0f, 0.45f);
         float w = stage.getViewport().getWorldWidth();
@@ -140,7 +143,7 @@ public class DeathOverlay {
         stage.getBatch().draw(dimTexture, 0, 0, w, h);
         stage.getBatch().setColor(1f, 1f, 1f, 1f);
         stage.getBatch().end();
-        // dibujar UI
+
         stage.draw();
     }
 

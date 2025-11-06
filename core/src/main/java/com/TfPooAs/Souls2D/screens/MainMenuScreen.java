@@ -1,26 +1,31 @@
 package com.TfPooAs.Souls2D.screens;
 
 import com.TfPooAs.Souls2D.core.Main;
+import com.TfPooAs.Souls2D.systems.SaveSystem;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
-import com.TfPooAs.Souls2D.systems.SaveSystem;
-import com.TfPooAs.Souls2D.systems.SoundManager;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class MainMenuScreen implements Screen {
     private final Main game;
     private Stage stage;
+    private FitViewport viewport;
+
+    // Resolución virtual base (igual que tu GameScreen)
+    private static final int VIRTUAL_WIDTH = 1920;
+    private static final int VIRTUAL_HEIGHT = 1080;
 
     // Fuentes personalizadas
     private BitmapFont garamondTitleFont;
@@ -33,10 +38,10 @@ public class MainMenuScreen implements Screen {
     }
 
     private void init() {
-        stage = new Stage(new ScreenViewport());
+        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        stage = new Stage(viewport);
         Gdx.input.setInputProcessor(stage);
 
-        // Genera las fuentes Garamond
         generateFonts();
 
         // === Título y subtítulo ===
@@ -61,18 +66,15 @@ public class MainMenuScreen implements Screen {
         table.setFillParent(true);
         table.bottom().padBottom(80f);
 
-        // Crear estilo personalizado de botón con la fuente Garamond
         TextButtonStyle garamondButtonStyle = new TextButtonStyle();
         garamondButtonStyle.font = garamondButtonFont;
         garamondButtonStyle.fontColor = Color.WHITE;
 
-        // Crear botones con estilo nuevo
         TextButton newGame = new TextButton("Nueva Partida", garamondButtonStyle);
         TextButton cont = new TextButton("Continuar", garamondButtonStyle);
         TextButton options = new TextButton("Audio", garamondButtonStyle);
         TextButton exit = new TextButton("Salir", garamondButtonStyle);
 
-        // Ajustar tamaño
         float btnW = 480f, btnH = 72f, pad = 14f;
         table.add(newGame).width(btnW).height(btnH).pad(pad);
         table.row();
@@ -109,7 +111,6 @@ public class MainMenuScreen implements Screen {
             }
         });
 
-        // Deshabilitar "Continuar" si no hay partida
         cont.setDisabled(!SaveSystem.hasLastBonfire());
     }
 
@@ -119,21 +120,18 @@ public class MainMenuScreen implements Screen {
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
             FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
-            // Fuente del título (muy grande)
             parameter.size = 160;
             garamondTitleFont = generator.generateFont(parameter);
 
-            // Fuente del subtítulo (más pequeña)
             parameter.size = 90;
             garamondSubtitleFont = generator.generateFont(parameter);
 
-            // Fuente de los botones
             parameter.size = 60;
             garamondButtonFont = generator.generateFont(parameter);
 
             generator.dispose();
         } catch (Exception e) {
-            Gdx.app.error("MainMenuScreen", "No se pudo generar la fuente AdobeGaramond-Bold.otf: " + e.getMessage());
+            Gdx.app.error("MainMenuScreen", "No se pudo generar la fuente Garamond.otf: " + e.getMessage());
             garamondTitleFont = new BitmapFont();
             garamondSubtitleFont = new BitmapFont();
             garamondButtonFont = new BitmapFont();
@@ -144,7 +142,6 @@ public class MainMenuScreen implements Screen {
     public void show() {
         Gdx.input.setCursorCatched(false);
         Gdx.input.setInputProcessor(stage);
-        // Play menu background music (loop). Safe if file is missing.
         try { SoundManager.ensureLooping("assets/musica.wav"); } catch (Exception ignored) {}
     }
 
@@ -152,6 +149,7 @@ public class MainMenuScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         stage.act(Math.min(delta, 1 / 30f));
         stage.draw();
     }
