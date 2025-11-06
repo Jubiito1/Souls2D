@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.TfPooAs.Souls2D.screens.MainMenuScreen;
 
 public class Main extends Game {
+    public void showVictoryScreen() {
+        gsm.setScreen(new com.TfPooAs.Souls2D.screens.VictoryScreen(this));
+    }
     public GameScreenManager gsm;
 
     @Override

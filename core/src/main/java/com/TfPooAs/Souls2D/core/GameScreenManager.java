@@ -1,5 +1,6 @@
 package com.TfPooAs.Souls2D.core;
 
+import com.TfPooAs.Souls2D.screens.VictoryScreen;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.TfPooAs.Souls2D.screens.GameScreen;
@@ -101,5 +102,9 @@ public class GameScreenManager {
     public void dispose() {
         if (activeScreen != null) activeScreen.dispose();
         if (previousScreen != null) previousScreen.dispose();
+    }
+
+    public void setScreen(VictoryScreen victoryScreen) {
+        setActiveScreenNormal(victoryScreen);
     }
 }

@@ -224,7 +224,7 @@ public class GameScreen implements Screen {
             if (mo instanceof RectangleMapObject) {
                 Rectangle rect = ((RectangleMapObject) mo).getRectangle();
                 // En el futuro, leer propiedad 'type' para diferentes NPCs
-                fireKeepers.add(new FireKeeper(rect.x, rect.y));
+                fireKeepers.add(new FireKeeper(rect.x, rect.y, game));
             }
         }
     }
@@ -233,7 +233,7 @@ public class GameScreen implements Screen {
     public void show() {
 
 
-        if (player == null) player = new Player(world, 9800, 2670);
+        if (player == null) player = new Player(world, 1200, 2170);
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
@@ -250,7 +250,7 @@ public class GameScreen implements Screen {
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
 
-        fireKeepers.add(new FireKeeper(10000, 2419)); // X,Y donde quieras que aparezca
+        fireKeepers.add(new FireKeeper(10000, 2419, game)); // X,Y donde quieras que aparezca
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
@@ -410,7 +410,7 @@ public class GameScreen implements Screen {
 
         // Debug opcional
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
-        debugRenderer.render(world, camera.combined.scl(Constants.PPM));
+        
 
 
         // Overlays primero (se dibujan sobre el juego)

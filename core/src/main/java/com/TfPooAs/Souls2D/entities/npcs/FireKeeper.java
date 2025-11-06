@@ -22,6 +22,7 @@ public class FireKeeper extends NPC implements Disposable {
     private Animation<TextureRegion> animation;
     private float stateTime = 0f;
     private Texture spriteSheet;
+    private final com.TfPooAs.Souls2D.core.Main game;
 
     private final String[] dialog = new String[]{
         "Haz permitido el acceso al santuario del enlace de fuego",
@@ -29,10 +30,11 @@ public class FireKeeper extends NPC implements Disposable {
         "Puedes volver a ser parte de ella..."
     };
 
-    public FireKeeper(float x, float y) {
+    public FireKeeper(float x, float y, com.TfPooAs.Souls2D.core.Main game) {
         super(x, y);
+        this.game = game;
         this.setInteractionRadius(100f);
-        loadAnimation("firekeeper-Sheet.png", 4, 1, 0.25f); // 4 frames horizontales
+        loadAnimation("firekeeper-Sheet.png", 4, 1, 0.25f);
     }
 
     private boolean playerNearby = false;
@@ -73,14 +75,24 @@ public class FireKeeper extends NPC implements Disposable {
 
         // --- Interacción ---
         if (playerNearby && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-            talking = true;
-            currentLine++;
-            if (currentLine >= dialog.length) {
+            if (!talking) {
+                talking = true;
                 currentLine = 0;
-                talking = false;
+            } else {
+                currentLine++;
+
+                // Si se terminó el diálogo → pantalla de victoria
+                if (currentLine >= dialog.length) {
+                    talking = false;
+                    currentLine = 0;
+                    game.showVictoryScreen();
+
+                    return;
+                }
             }
         }
     }
+
 
 
     @Override
@@ -92,7 +104,7 @@ public class FireKeeper extends NPC implements Disposable {
             font.draw(batch, "Presiona E para hablar", position.x - 20, position.y + currentFrame.getRegionHeight() + 20);
         }
 
-        if (talking) {
+        if (talking && currentLine < dialog.length) {
             font.draw(batch, dialog[currentLine], position.x - 40, position.y + currentFrame.getRegionHeight() + 40);
         }
     }
