@@ -18,6 +18,7 @@ maps/tilemapeardo.png
 maps/tilemapeardo.tsx
 maps/tilemapeardo2.png
 maps/tilemapeardo2.tsx
+musica.wav
 ui/Garamond.otf
 ui/font-list.fnt
 ui/font-subtitle.fnt
