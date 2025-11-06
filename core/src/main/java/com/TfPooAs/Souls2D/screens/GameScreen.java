@@ -19,6 +19,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.TfPooAs.Souls2D.entities.Enemy;
 import com.TfPooAs.Souls2D.entities.Enemy2;
 import com.TfPooAs.Souls2D.entities.EnemyProjectile;
+import com.TfPooAs.Souls2D.entities.enemies.IudexGundyr;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
@@ -65,6 +66,11 @@ public class GameScreen implements Screen {
     private java.util.List<Enemy2> rangedEnemies = new java.util.ArrayList<>();
     private java.util.List<EnemyProjectile> enemyProjectiles = new java.util.ArrayList<>();
     private HUD hud;
+    // Boss
+    private IudexGundyr boss;
+    // Coordenadas de spawn del boss (ajustables)
+    private float bossSpawnX = 1500f;
+    private float bossSpawnY = 2170f;
 
 
     // Overlays
@@ -247,10 +253,10 @@ public class GameScreen implements Screen {
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
-                {1600, 2170},
-                {2100, 2170},
+                //{1600, 2170},
+                //{2100, 2170},
 
-                {2600, 3170},
+                //{2600, 3170},
                 {3200, 2170},
             };
             for (float[] sp : spawnPoints) {
@@ -264,7 +270,7 @@ public class GameScreen implements Screen {
         // Crear enemigos a distancia (Enemy2) una sola vez
         if (rangedEnemies.isEmpty()) {
             float[][] spawnPoints2 = new float[][]{
-                {1900, 2170},
+                //{1900, 2170},
                 {3450, 2170},
             };
             for (float[] sp : spawnPoints2) {
@@ -279,9 +285,20 @@ public class GameScreen implements Screen {
 
 
 
+        // Crear Boss si aún no existe
+        if (boss == null && player != null) {
+            boss = new IudexGundyr(world, bossSpawnX, bossSpawnY, player);
+            enemies.add(boss);
+            player.addEnemy(boss);
+        }
+
         // Crear HUD después de instanciar el player (y opcionalmente el enemy)
         if (hud == null) {
-            hud = new HUD(player); // si tu HUD necesita también enemy, ajusta el constructor
+            hud = new HUD(player);
+        }
+        // Vincular Boss a la HUD para barra inferior
+        if (hud != null && boss != null) {
+            hud.setBoss(boss);
         }
 
     }
