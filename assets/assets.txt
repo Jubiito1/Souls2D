@@ -1,4 +1,6 @@
 .gitkeep
+Gundyr_slash.wav
+Gundyr_stab.wav
 arrow_shoot.wav
 backgrounds/fondo.png
 backgrounds/fondo2.png
