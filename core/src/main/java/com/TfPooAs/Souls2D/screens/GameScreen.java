@@ -27,6 +27,7 @@ import com.TfPooAs.Souls2D.entities.items.Bonfire;
 import com.TfPooAs.Souls2D.entities.npcs.FireKeeper;
 import com.TfPooAs.Souls2D.world.Background;
 import com.TfPooAs.Souls2D.systems.SaveSystem;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.TfPooAs.Souls2D.ui.HUD;
 
 public class GameScreen implements Screen {
@@ -192,6 +193,9 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
 
+        // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
+        SoundManager.playBackground("assets/audio/bgm.ogg", true);
+
         if (player == null) player = new Player(world, 1200, 750);
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {
             float[] pos = SaveSystem.loadLastBonfire();
@@ -234,12 +238,16 @@ public class GameScreen implements Screen {
         if (!isDeathShown && player != null && player.isDead()) {
             isDeathShown = true;
             if (deathOverlay != null) deathOverlay.show();
+            // Pause background music when death screen shows
+            SoundManager.pauseBackground();
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             if (!isPaused) {
                 isPaused = true;
                 pauseOverlay.show();
+                // Pause background music when pausing the game
+                SoundManager.pauseBackground();
             }
         }
 
@@ -328,9 +336,11 @@ public class GameScreen implements Screen {
     @Override public void hide() {
         if (pauseOverlay != null) pauseOverlay.hide();
         if (deathOverlay != null) deathOverlay.hide();
+        // Stop music when screen hides (e.g., switching screens)
+        SoundManager.stopBackground();
     }
-    @Override public void pause() {}
-    @Override public void resume() {}
+    @Override public void pause() { SoundManager.pauseBackground(); }
+    @Override public void resume() { if (!isPaused && !isDeathShown) SoundManager.resumeBackground(); }
 
     public void resumeFromPause() {
         if (!isPaused) return;
