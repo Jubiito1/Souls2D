@@ -19,6 +19,7 @@ public class Player extends Entity {
 
     private float moveSpeed = 0.01f;
     private float jumpForce = 1f;
+    private float maxHorizontalSpeed = 1.7f; // velocidad máxima horizontal (en unidades Box2D)
     private boolean isGrounded = true;
 
     // === Sistema de vida ===
@@ -255,11 +256,23 @@ public class Player extends Entity {
             jumpTimer = 0f;
         }
 
+        // === Limitar velocidad del cuerpo ===
+        Vector2 velocity = body.getLinearVelocity();
+
+        // Limitar velocidad horizontal
+        if (velocity.x > maxHorizontalSpeed) velocity.x = maxHorizontalSpeed;
+        else if (velocity.x < -maxHorizontalSpeed) velocity.x = -maxHorizontalSpeed;
+
+        // Reaplicar la velocidad limitada al cuerpo
+        body.setLinearVelocity(velocity);
+
+
         // Sincronizar posición visual con posición del cuerpo
         position.set(
             body.getPosition().x * Constants.PPM - width / 2,
             body.getPosition().y * Constants.PPM - height / 2
         );
+
     }
 
     private void handleInput() {
