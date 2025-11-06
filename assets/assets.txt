@@ -1,6 +1,7 @@
 .gitkeep
 arrow_shoot.wav
 backgrounds/fondo.png
+backgrounds/fondo2.png
 caballeroAtaque-Sheet.png
 caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png
