@@ -75,7 +75,7 @@ public class Enemy extends Entity {
         this.attackTexture = new Texture("enemy-attack.png");
 
         // === Animaciones ===
-        // Idle (una sola imagen)
+
         AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
             "enemy-idle.png", 1, 1, 0.2f, Animation.PlayMode.LOOP);
         if (idlePair != null) {

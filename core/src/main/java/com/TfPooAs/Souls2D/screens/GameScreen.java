@@ -248,29 +248,33 @@ public class GameScreen implements Screen {
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
                 {1600, 2170},
-                {1900, 2170},
                 {2100, 2170},
+
                 {2600, 3170},
                 {3200, 2170},
             };
             for (float[] sp : spawnPoints) {
                 Enemy e = new Enemy(world, sp[0], sp[1], player);
                 enemies.add(e);
-                if (player != null) player.addEnemy(e);
+                // CORREGIR: Esta línea está mal - debe agregar Enemy, no Enemy2
+                if (player != null) player.addEnemy(e); // Corregido: era addRangedEnemy(e2)
             }
         }
 
         // Crear enemigos a distancia (Enemy2) una sola vez
         if (rangedEnemies.isEmpty()) {
             float[][] spawnPoints2 = new float[][]{
-                {1300, 2170},
+                {1900, 2170},
                 {3450, 2170},
             };
             for (float[] sp : spawnPoints2) {
                 Enemy2 e2 = new Enemy2(world, sp[0], sp[1], player, enemyProjectiles);
                 rangedEnemies.add(e2);
+                // AGREGAR ESTA LÍNEA QUE FALTABA:
+                if (player != null) player.addRangedEnemy(e2);
             }
         }
+
 
 
 

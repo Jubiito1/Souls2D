@@ -14,6 +14,7 @@ enemy-walk.png
 enemy2-attack.png
 enemy2-walk.png
 estus.png
+flecha.png
 hoguera.png
 maps/cemetery.tmx
 maps/tilemapeardo.png

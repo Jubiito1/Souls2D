@@ -8,6 +8,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+
 
 import java.util.List;
 
@@ -19,6 +22,9 @@ public class Enemy2 extends Entity {
     private final World world;
     private final Player player;
     private final List<EnemyProjectile> projectileSink;
+
+    // Textura 1x1 para dibujar barras con SpriteBatch (compartida)
+    private static Texture whiteTex;
 
     // Vida
     private int maxHealth = 40;
@@ -41,6 +47,8 @@ public class Enemy2 extends Entity {
     private final float PROJECTILE_LIFETIME = 4.0f;
 
     // Animaciones
+    private Animation<TextureRegion> idleAnim;
+    private Texture idleSheetTexture;
     private Animation<TextureRegion> walkAnim;
     private Animation<TextureRegion> attackAnim;
     private Texture walkSheetTexture;
@@ -57,14 +65,20 @@ public class Enemy2 extends Entity {
         this.projectileSink = projectileSink;
 
         // Animaciones
+        AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy2-idle.png", 1, 1, 0.2f, Animation.PlayMode.LOOP);
+        if (idlePair != null) {
+            this.idleAnim = idlePair.animation;
+            this.idleSheetTexture = idlePair.texture;
+        }
         AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
-                "enemy2-walk.png", 4, 1, 0.12f, Animation.PlayMode.LOOP);
+            "enemy2-walk.png", 4, 1, 0.12f, Animation.PlayMode.LOOP);
         if (walkPair != null) {
             this.walkAnim = walkPair.animation;
             this.walkSheetTexture = walkPair.texture;
         }
         AnimationUtils.AnimWithTexture attackPair = AnimationUtils.createFromSpritesheetIfExists(
-                "enemy2-attack.png", 6, 1, 0.10f, Animation.PlayMode.NORMAL);
+            "enemy2-attack.png", 5, 1, 0.10f, Animation.PlayMode.NORMAL);
         if (attackPair != null) {
             this.attackAnim = attackPair.animation;
             this.attackSheetTexture = attackPair.texture;
@@ -72,13 +86,14 @@ public class Enemy2 extends Entity {
 
         // Determinar tamaño visual a partir de alguna anim
         TextureRegion baseFrame = (walkAnim != null)
-                ? walkAnim.getKeyFrame(0)
-                : (attackAnim != null ? attackAnim.getKeyFrame(0) : new TextureRegion(texture));
+            ? walkAnim.getKeyFrame(0)
+            : (attackAnim != null ? attackAnim.getKeyFrame(0) : new TextureRegion(texture));
         this.width = baseFrame.getRegionWidth();
         this.height = baseFrame.getRegionHeight();
 
         createBody(x, y, width, height);
     }
+
 
     private void createBody(float x, float y, float frameWidth, float frameHeight) {
         BodyDef bdef = new BodyDef();
@@ -168,40 +183,92 @@ public class Enemy2 extends Entity {
         attackTimer = 0f;
         shootCooldownTimer = SHOOT_COOLDOWN;
 
-        // dirección hacia el jugador
-        float dirX = facingRight ? 1f : -1f;
-        float dirY = 0f;
+        // CALCULAR DIRECCIÓN HACIA EL JUGADOR (en lugar de solo horizontal)
+        float enemyCenterX = position.x + width / 2f;
+        float enemyCenterY = position.y + height / 2f;
+        float playerCenterX = player.getPosition().x + player.getWidth() / 2f;
+        float playerCenterY = player.getPosition().y + player.getHeight() / 2f;
+
+        // Vector dirección normalizado hacia el jugador
+        float dirX = playerCenterX - enemyCenterX;
+        float dirY = playerCenterY - enemyCenterY;
+
+        // Normalizar el vector para que tenga longitud 1
+        float length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+        if (length > 0) {
+            dirX /= length;
+            dirY /= length;
+        } else {
+            // Si están en la misma posición, disparar horizontalmente
+            dirX = facingRight ? 1f : -1f;
+            dirY = 0f;
+        }
 
         // spawn cerca de la "mano"
         float spawnX = position.x + width / 2f + (facingRight ? width * 0.3f : -width * 0.3f);
         float spawnY = position.y + height * 0.55f;
 
         EnemyProjectile p = new EnemyProjectile(
-                world,
-                spawnX,
-                spawnY,
-                dirX,
-                dirY,
-                PROJECTILE_SPEED,
-                PROJECTILE_DAMAGE,
-                PROJECTILE_LIFETIME
+            world,
+            spawnX,
+            spawnY,
+            dirX,  // dirección X normalizada hacia el jugador
+            dirY,  // dirección Y normalizada hacia el jugador
+            PROJECTILE_SPEED,
+            PROJECTILE_DAMAGE,
+            PROJECTILE_LIFETIME
         );
         // set user data en el body para localizarlo en ContactListener
         p.getBody().setUserData(p);
         projectileSink.add(p);
     }
 
+
     @Override
     public void render(SpriteBatch batch) {
         if (!active || isDead) return;
+
         TextureRegion frame;
         if (isAttacking && attackAnim != null) frame = attackAnim.getKeyFrame(attackTimer);
         else if (walkAnim != null) frame = walkAnim.getKeyFrame(stateTime);
         else frame = new TextureRegion(texture);
 
-        if (facingRight) batch.draw(frame, position.x, position.y, width, height);
+        if (!facingRight) batch.draw(frame, position.x, position.y, width, height);
         else batch.draw(frame, position.x + width, position.y, -width, height);
+
+        // === Barra de vida encima del enemigo ===
+        // Lazy-init de textura blanca 1x1 para rectángulos
+        if (whiteTex == null) {
+            Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+            pm.setColor(1, 1, 1, 1);
+            pm.fill();
+            whiteTex = new Texture(pm);
+            pm.dispose();
+        }
+
+        float barWidth = Math.max(30f, width); // al menos 30px de ancho
+        float barHeight = 6f;
+        float barX = position.x + (width - barWidth) / 2f;
+        float barY = position.y + height + 6f; // un poco por encima
+        float ratio = Math.max(0f, Math.min(1f, (float) currentHealth / (float) maxHealth));
+
+        // Guardar color actual y usar tintes para "pintar" la whiteTex
+        Color prev = batch.getColor().cpy();
+
+        // Borde
+        batch.setColor(new Color(0.15f, 0.15f, 0.15f, 1f));
+        batch.draw(whiteTex, barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        // Fondo interior
+        batch.setColor(new Color(0.07f, 0.07f, 0.07f, 1f));
+        batch.draw(whiteTex, barX, barY, barWidth, barHeight);
+        // Relleno de vida
+        batch.setColor(new Color(0.75f, 0.15f, 0.10f, 1f));
+        batch.draw(whiteTex, barX, barY, barWidth * ratio, barHeight);
+
+        // Restaurar el color del batch para no afectar otros renders
+        batch.setColor(prev);
     }
+
 
     public void setGrounded(boolean grounded) { this.isGrounded = grounded; }
     public boolean isGrounded() { return isGrounded; }
@@ -213,8 +280,12 @@ public class Enemy2 extends Entity {
             currentHealth = 0;
             isDead = true;
             setActive(false);
+            System.out.println("¡Enemigo a distancia eliminado!");
+        } else {
+            System.out.println("Enemigo a distancia recibió " + amount + " de daño. Vida: " + currentHealth + "/" + maxHealth);
         }
     }
+
 
     public boolean isDead() { return isDead; }
     public Body getBody() { return body; }

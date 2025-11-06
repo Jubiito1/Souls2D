@@ -103,11 +103,15 @@ public class Player extends Entity {
 
     // Lista de enemigos para detectar golpes
     private Array<Enemy> enemies;
+    private Array<Enemy2> rangedEnemies;
+
 
     public Player(World world, float x, float y) {
         super(x, y, "caballeroIdle-Sheet.png");
         this.world = world;
         this.enemies = new Array<>();
+        this.rangedEnemies = new Array<>();
+
 
         // Cargar animaciones desde spritesheets si existen
         AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
@@ -173,11 +177,19 @@ public class Player extends Entity {
     public void addEnemy(Enemy enemy) {
         enemies.add(enemy);
     }
+    public void addRangedEnemy(Enemy2 enemy) {
+        rangedEnemies.add(enemy);
+    }
 
     // Método para remover enemigos de la lista
     public void removeEnemy(Enemy enemy) {
         enemies.removeValue(enemy, true);
     }
+
+    public void removeRangedEnemy(Enemy2 enemy) {
+        rangedEnemies.removeValue(enemy, true);
+    }
+
 
     private Fixture currentFixture;
     // Hitbox base (en metros, Box2D). Personalizable mediante setters
@@ -537,6 +549,31 @@ public class Player extends Entity {
                 }
             }
         }
+
+
+        // Revisar enemigos a distancia (Enemy2)
+        for (Enemy2 rangedEnemy : rangedEnemies) {
+            if (rangedEnemy.isDead() || !rangedEnemy.isActive()) continue;
+
+            float distanceToEnemy = Vector2.dst(
+                position.x + width/2f, position.y + height/2f,
+                rangedEnemy.getPosition().x + rangedEnemy.getWidth()/2f,
+                rangedEnemy.getPosition().y + rangedEnemy.getHeight()/2f
+            );
+
+            // Verificar si el enemigo está en rango y en la dirección correcta
+            if (distanceToEnemy <= ATTACK_RANGE) {
+                boolean enemyInFront = facingRight ?
+                    (rangedEnemy.getPosition().x > position.x) :
+                    (rangedEnemy.getPosition().x < position.x);
+
+                if (enemyInFront) {
+                    rangedEnemy.takeDamage(ATTACK_DAMAGE);
+                    System.out.println("¡Golpeaste al enemigo a distancia!");
+                }
+            }
+        }
+
     }
 
     // Teletransporta al jugador a coordenadas en píxeles (tomadas como esquina inferior izquierda del sprite)
