@@ -142,9 +142,10 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void show() {
+        Gdx.input.setCursorCatched(false);
         Gdx.input.setInputProcessor(stage);
         // Play menu background music (loop). Safe if file is missing.
-        SoundManager.playBackground("assets/menu.wav", true);
+        try { SoundManager.ensureLooping("assets/musica.wav"); } catch (Exception ignored) {}
     }
 
     @Override

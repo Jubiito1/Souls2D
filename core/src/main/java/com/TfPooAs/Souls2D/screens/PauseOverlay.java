@@ -163,17 +163,16 @@ public class PauseOverlay {
     }
 
     public void show() {
+        Gdx.input.setCursorCatched(false);
         // Actualizamos viewport al mostrar
         stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         Gdx.input.setInputProcessor(stage);
         // Iniciar música/loop de pausa
-        try { SoundManager.ensureLooping("assets/pausa.wav"); } catch (Exception ignored) {}
     }
 
     public void hide() {
         Gdx.input.setInputProcessor(null); // o el InputProcessor del juego si lo tenés
         // Detener música/loop de pausa al ocultar
-        try { SoundManager.stopLoop("assets/pausa.wav"); } catch (Exception ignored) {}
     }
 
     public void dispose() {

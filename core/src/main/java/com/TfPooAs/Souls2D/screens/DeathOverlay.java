@@ -147,6 +147,7 @@ public class DeathOverlay {
     public Stage getStage() { return stage; }
 
     public void show() {
+        Gdx.input.setCursorCatched(false);
         stage.getViewport().update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         Gdx.input.setInputProcessor(stage);
     }

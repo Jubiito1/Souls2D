@@ -232,12 +232,11 @@ public class GameScreen implements Screen {
     @Override
     public void show() {
 
-
+        Gdx.input.setCursorCatched(true);
         if (player == null) player = new Player(world, 9800, 2670);
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
-        SoundManager.playBackground("assets/musica.wav", true);
 
         if (player == null) player = new Player(world, 1200, 750);
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {

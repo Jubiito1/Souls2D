@@ -45,7 +45,7 @@ public class Bonfire {
         if (!playerNearby) return;
         // Mostrar prompt encima de la posición de la fogata
         String text = "Presiona E para guardar";
-        font.draw(batch, text, position.x - 20, position.y + 40);
+        font.draw(batch, text, position.x - 80, position.y + 40);
     }
 
     public Vector2 getPosition() {

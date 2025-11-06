@@ -24,6 +24,7 @@ public class FireKeeper extends NPC implements Disposable {
     private Texture spriteSheet;
 
     private final String[] dialog = new String[]{
+        "",
         "Haz permitido el acceso al santuario del enlace de fuego",
         "La llama primigenia estará eternamente agradecida",
         "Puedes volver a ser parte de ella..."
@@ -72,7 +73,7 @@ public class FireKeeper extends NPC implements Disposable {
         }
 
         // --- Interacción ---
-        if (playerNearby && Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+        if (playerNearby && Gdx.input.isKeyJustPressed(Input.Keys.F)) {
             talking = true;
             currentLine++;
             if (currentLine >= dialog.length) {
@@ -89,11 +90,11 @@ public class FireKeeper extends NPC implements Disposable {
         batch.draw(currentFrame, position.x, position.y, currentFrame.getRegionWidth(), currentFrame.getRegionHeight());
 
         if (playerNearby && !talking) {
-            font.draw(batch, "Presiona E para hablar", position.x - 20, position.y + currentFrame.getRegionHeight() + 20);
+            font.draw(batch, "Presiona F para hablar", position.x - 60, position.y + currentFrame.getRegionHeight() + 30);
         }
 
         if (talking) {
-            font.draw(batch, dialog[currentLine], position.x - 40, position.y + currentFrame.getRegionHeight() + 40);
+            font.draw(batch, dialog[currentLine], position.x - 170, position.y + currentFrame.getRegionHeight() + 70);
         }
     }
 
