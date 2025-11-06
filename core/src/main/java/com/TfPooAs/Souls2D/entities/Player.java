@@ -208,13 +208,15 @@ public class Player extends Entity {
         fdef.density = 1f;
         fdef.friction = 0f;
         fdef.filter.categoryBits = Constants.BIT_PLAYER;
-        fdef.filter.maskBits = Constants.BIT_GROUND;
+        // IMPORTANTE: Agregar BIT_PROJECTILE a la máscara
+        fdef.filter.maskBits = Constants.BIT_GROUND | Constants.BIT_PROJECTILE;
 
         Fixture fx = body.createFixture(fdef);
         fx.setUserData("player");
         shape.dispose();
         return fx;
     }
+
 
     // Recrea la fixture según el estado actual (normal o rodando) usando la hitbox base configurable
     private void recreateFixtureForCurrentState() {

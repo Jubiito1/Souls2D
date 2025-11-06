@@ -88,7 +88,7 @@ public class Enemy2 extends Entity {
         body = world.createBody(bdef);
 
         PolygonShape shape = new PolygonShape();
-        float spriteWidth = 62f;
+        float spriteWidth = 61f;
         float spriteHeight = 59f;
         float halfW = (spriteWidth / 2f) / Constants.PPM;
         float halfH = (spriteHeight / 2f) / Constants.PPM;

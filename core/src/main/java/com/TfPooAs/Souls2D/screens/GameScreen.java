@@ -263,7 +263,7 @@ public class GameScreen implements Screen {
         // Crear enemigos a distancia (Enemy2) una sola vez
         if (rangedEnemies.isEmpty()) {
             float[][] spawnPoints2 = new float[][]{
-                {2300, 2170},
+                {1300, 2170},
                 {3450, 2170},
             };
             for (float[] sp : spawnPoints2) {
