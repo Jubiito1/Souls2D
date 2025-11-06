@@ -110,7 +110,7 @@ public class DeathOverlay {
         // Listeners
         retry.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                game.gsm.showGameScreen();
+                game.gsm.showGameScreen(true);
             }
         });
 
