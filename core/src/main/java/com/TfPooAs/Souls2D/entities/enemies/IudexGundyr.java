@@ -1,3 +1,4 @@
+
 package com.TfPooAs.Souls2D.entities.enemies;
 
 import com.TfPooAs.Souls2D.entities.Enemy;
@@ -11,243 +12,491 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 
 /**
- * Boss Iudex Gundyr:
- * - IA con 2 ataques (ventanas: windup, activo, recovery).
- * - Ataque 1: rápido con desplazamiento (dash) y rango configurable.
- * - Ataque 2: más lento, sin desplazamiento, rango configurable.
- * - Vida base 300 (configurable).
- * - Animaciones de ataque: gundyrAtaque-Sheet.png (6 col), gundyrAtaque2-Sheet.png (7 col).
- * - Usa idle/walk de enemigo estándar como placeholder si no hay sprites propios.
+ * Boss Iudex Gundyr - Boss final del juego
+ * - Hitbox más grande apropiada para boss
+ * - Animaciones de walk corregidas
+ * - Sistema de IA complejo con múltiples ataques
+ * - Escala visual ajustable
+ * - Barra de vida propia de boss
  */
 public class IudexGundyr extends Enemy {
 
-    // === Configuración (modificables) ===
-    private int MAX_HP = 300;
+    // === Configuración del Boss ===
+    private int MAX_HP = 400;
     private int hp = MAX_HP;
 
-    // Escala visual del boss (ancho/alto). No modifica el collider del cuerpo.
-    private float SCALE = 1.7f; // pedido mínimo: 1.7x
+    // Escala visual del boss (más grande que enemigos normales)
+    private float SCALE = 1f; // Aumentado un poco más
 
-    private float ATTACK1_RANGE = 70f;  // en píxeles (base, se escalará visualmente)
-    private float ATTACK2_RANGE = 90f;  // en píxeles (base, se escalará visualmente)
+    // Rangos de ataque (aumentados por hitbox más grande)
+    private float ATTACK1_RANGE = 50f; // Aumentado
+    private float ATTACK2_RANGE = 60f; // Aumentado
 
-    private int ATTACK1_DAMAGE = 0;
-    private int ATTACK2_DAMAGE = 0;
+    // Daño de ataques
+    private int ATTACK1_DAMAGE = 35;
+    private int ATTACK2_DAMAGE = 45;
 
-    // Ventanas más lentas (aumentadas ~35%)
-    private float ATTACK1_WINDUP = 0.34f;
-    private float ATTACK1_ACTIVE = 0.27f;
-    private float ATTACK1_RECOVERY = 0.9f;
-    private float ATTACK1_DASH_SPEED = 4.2f; // un poco más rápido por tamaño
+    // Velocidades de ataque (más lentas para boss)
+    private float ATTACK1_WINDUP = 0.7f;
+    private float ATTACK1_ACTIVE = 0.3f;
+    private float ATTACK1_RECOVERY = 1.0f;
+    private float ATTACK1_DASH_SPEED = 3.8f; // Ajustado para hitbox más grande
 
-    private float ATTACK2_WINDUP = 0.61f;
-    private float ATTACK2_ACTIVE = 0.41f;
-    private float ATTACK2_RECOVERY = 0.81f;
+    private float ATTACK2_WINDUP = 0.8f;
+    private float ATTACK2_ACTIVE = 0.3f;
+    private float ATTACK2_RECOVERY = 1.2f;
 
-    private float CHASE_SPEED = 0.22f; // movimiento básico hacia el jugador
-    private float ATTACK_COOLDOWN = 3.0f;
-    private float ATTACK_COOLDOWN_JITTER = 0.6f; // variación aleatoria ±0.6s
+    // Movimiento
+    private float CHASE_SPEED = 0.50f; // Ajustado para hitbox más grande
+    private float ATTACK_COOLDOWN = 3.5f;
+    private float ATTACK_COOLDOWN_JITTER = 0.8f;
 
-    // === Estado ===
-    private enum State { IDLE, MOVE, A1_WINDUP, A1_ACTIVE, A1_RECOVERY, A2_WINDUP, A2_ACTIVE, A2_RECOVERY, DEAD }
-    private State state = State.IDLE;
+    // === Estados del Boss ===
+    private enum BossState {
+        IDLE, CHASE,
+        ATTACK1_WINDUP, ATTACK1_ACTIVE, ATTACK1_RECOVERY,
+        ATTACK2_WINDUP, ATTACK2_ACTIVE, ATTACK2_RECOVERY,
+        DEAD
+    }
+
+    private BossState currentState = BossState.IDLE;
     private float stateTimer = 0f;
+    private float totalTime = 0f;
     private boolean facingRight = true;
-    private boolean grounded = true; // sincronizado por GameScreen via ContactListener del Enemy base
-
-    private boolean hitApplied = false; // para no aplicar daño múltiple por ventana activa
+    private boolean hitApplied = false;
 
     // Referencias
-    private final Player playerRef; // guardamos referencia propia
-    private final Body body;        // reutilizamos el cuerpo creado por Enemy
+    private final Player playerRef;
+    private final Body body;
 
-    // Animations
-    private Animation<TextureRegion> attack1Anim; // 6 frames
-    private Animation<TextureRegion> attack2Anim; // 7 frames
-    private Animation<TextureRegion> idleAnim;    // placeholder
-    private Animation<TextureRegion> walkAnim;    // placeholder
+    // Animaciones específicas del boss
+    private Animation<TextureRegion> bossIdleAnim;
+    private Animation<TextureRegion> bossWalkAnim;
+    private Animation<TextureRegion> bossAttack1Anim;
+    private Animation<TextureRegion> bossAttack2Anim;
 
-    // Control visual
-    private float animTime = 0f;
+    // Texturas para disposar
+    private Texture idleTexture;
+    private Texture walkTexture;
+    private Texture attack1Texture;
+    private Texture attack2Texture;
+
+    // Control de cooldowns
+    private float nextAttack1Time = 0f;
+    private float nextAttack2Time = 0f;
+
+    // Textura para barra de vida
+    private static Texture whiteTexture;
+
+    // === Control mejorado de animación de walk ===
+    private float walkAnimTimer = 0f; // Timer separado para walk
+    private boolean isWalking = false; // Estado de caminar
 
     public IudexGundyr(World world, float x, float y, Player player) {
         super(world, x, y, player);
         this.playerRef = player;
         this.body = getBody();
 
-        // Cargar anims de ataque (si no existen, se ignora y no crashea)
-        AnimationUtils.AnimWithTexture a1 = AnimationUtils.createFromSpritesheetIfExists(
-                "gundyrAtaque-Sheet.png", 6, 1, 0.06f, Animation.PlayMode.NORMAL);
-        if (a1 != null) this.attack1Anim = a1.animation;
-
-        AnimationUtils.AnimWithTexture a2 = AnimationUtils.createFromSpritesheetIfExists(
-                "gundyrAtaque2-Sheet.png", 7, 1, 0.06f, Animation.PlayMode.NORMAL);
-        if (a2 != null) this.attack2Anim = a2.animation;
-
-        // Placeholders de idle/walk (usar enemigo estándar para mantener visibilidad)
-        AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
-                "gundyrWalk.png", 1, 1, 0.2f, Animation.PlayMode.LOOP);
-        if (idlePair != null) this.idleAnim = idlePair.animation;
-        AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
-                "gundyrWalk.png", 4, 1, 0.10f, Animation.PlayMode.LOOP);
-        if (walkPair != null) this.walkAnim = walkPair.animation;
-
-        // Asegurar dimensiones básicas a partir de idle o texture base de Enemy
-        TextureRegion baseFrame = (idleAnim != null)
-                ? idleAnim.getKeyFrame(0)
-                : (walkAnim != null ? walkAnim.getKeyFrame(0) : new TextureRegion(texture));
-        this.width = baseFrame.getRegionWidth();
-        this.height = baseFrame.getRegionHeight();
+        loadBossAnimations();
+        initializeBossStats();
+        createBossHitbox(); // Crear hitbox más grande
     }
 
-    // ===== API pública para configuración externa =====
-    public void setMaxHp(int value) { this.MAX_HP = value; if (hp > MAX_HP) hp = MAX_HP; }
-    public void setAttack1Range(float px) { this.ATTACK1_RANGE = px; }
-    public void setAttack2Range(float px) { this.ATTACK2_RANGE = px; }
-    public void setScale(float scale) { this.SCALE = Math.max(0.1f, scale); }
+    private void loadBossAnimations() {
+        // === ANIMACIÓN IDLE ===
+        AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
+            "gundyrWalk-Sheet.png", 1, 1, 0.8f, Animation.PlayMode.LOOP);
+        if (idlePair != null) {
+            this.bossIdleAnim = idlePair.animation;
+            this.idleTexture = idlePair.texture;
+            Gdx.app.log("IudexGundyr", "Animación IDLE cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación IDLE");
+        }
 
-    @Override
-    public void update(float delta) {
-        if (state == State.DEAD) return;
+        // === ANIMACIÓN WALK - CORREGIDA ===
+        AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
+            "gundyrWalk-Sheet.png", 7, 1, 0.15f, Animation.PlayMode.LOOP); // Velocidad más lenta y clara
+        if (walkPair != null) {
+            this.bossWalkAnim = walkPair.animation;
+            this.walkTexture = walkPair.texture;
+            Gdx.app.log("IudexGundyr", "Animación WALK cargada correctamente - 7 frames");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación WALK");
+        }
 
-        animTime += delta;
-        stateTimer += delta;
+        // === ANIMACIÓN ATAQUE 1 ===
+        AnimationUtils.AnimWithTexture attack1Pair = AnimationUtils.createFromSpritesheetIfExists(
+            "gundyrAtaque-Sheet.png", 6, 1, 0.08f, Animation.PlayMode.NORMAL);
+        if (attack1Pair != null) {
+            this.bossAttack1Anim = attack1Pair.animation;
+            this.attack1Texture = attack1Pair.texture;
+            Gdx.app.log("IudexGundyr", "Animación ATAQUE 1 cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación ATAQUE 1");
+        }
 
-        // Sync posicion visual con el cuerpo
-        position.set(
-                body.getPosition().x * Constants.PPM - width / 2f,
-                body.getPosition().y * Constants.PPM - height / 2f
-        );
+        // === ANIMACIÓN ATAQUE 2 ===
+        AnimationUtils.AnimWithTexture attack2Pair = AnimationUtils.createFromSpritesheetIfExists(
+            "gundyrAtaque2-Sheet.png", 7, 1, 0.08f, Animation.PlayMode.NORMAL);
+        if (attack2Pair != null) {
+            this.bossAttack2Anim = attack2Pair.animation;
+            this.attack2Texture = attack2Pair.texture;
+            Gdx.app.log("IudexGundyr", "Animación ATAQUE 2 cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación ATAQUE 2");
+        }
 
-        // Lógica de detección básica
-        if (playerRef != null && !playerRef.isDead()) {
-            float dist = Vector2.dst(position.x, position.y, playerRef.getPosition().x, playerRef.getPosition().y);
-            facingRight = playerRef.getPosition().x > position.x;
+        // Determinar tamaño visual
+        TextureRegion baseFrame = null;
+        if (bossWalkAnim != null) {
+            baseFrame = bossWalkAnim.getKeyFrame(0);
+        } else if (bossIdleAnim != null) {
+            baseFrame = bossIdleAnim.getKeyFrame(0);
+        } else {
+            baseFrame = new TextureRegion(texture);
+        }
+        if (baseFrame == null) {
+            Texture fallback = new Texture("gundyrWalk-Sheet.png"); // o cualquier textura conocida
+            baseFrame = new TextureRegion(fallback);
+        }
 
-            switch (state) {
-                case IDLE:
-                case MOVE:
-                    // Decidir si perseguir/atacar de forma aleatoria (permitiendo repetición)
-                    boolean canA1 = dist <= (ATTACK1_RANGE * SCALE) && canUseAttack1();
-                    boolean canA2 = dist <= (ATTACK2_RANGE * SCALE) && canUseAttack2();
-                    if (canA1 && canA2) {
-                        // Ponderar por distancia: más cerca favorece A1, más lejos favorece A2
-                        float a1Edge = ATTACK1_RANGE * SCALE;
-                        float a2Edge = ATTACK2_RANGE * SCALE;
-                        float t = MathUtils.clamp((dist - a1Edge) / Math.max(0.0001f, (a2Edge - a1Edge)), 0f, 1f);
-                        float probA2 = 0.35f + 0.65f * t; // cerca: ~35% A2, lejos: ~100% A2
-                        if (MathUtils.randomBoolean(probA2)) {
-                            enter(State.A2_WINDUP);
-                        } else {
-                            enter(State.A1_WINDUP);
-                        }
-                    } else if (canA2) {
-                        enter(State.A2_WINDUP);
-                    } else if (canA1) {
-                        enter(State.A1_WINDUP);
-                    } else {
-                        // Perseguir
-                        pursue(delta);
-                    }
-                    break;
-                case A1_WINDUP:
-                    if (stateTimer >= ATTACK1_WINDUP) {
-                        enter(State.A1_ACTIVE);
-                        // iniciar dash en ACTIVE
-                        float dir = facingRight ? 1f : -1f;
-                        body.setLinearVelocity(dir * ATTACK1_DASH_SPEED, body.getLinearVelocity().y);
-                    }
-                    break;
-                case A1_ACTIVE:
-                    if (!hitApplied) tryApplyHit(ATTACK1_DAMAGE, ATTACK1_RANGE);
-                    if (stateTimer >= ATTACK1_ACTIVE) {
-                        // frenar
-                        body.setLinearVelocity(body.getLinearVelocity().x * 0.2f, body.getLinearVelocity().y);
-                        enter(State.A1_RECOVERY);
-                    }
-                    break;
-                case A1_RECOVERY:
-                    if (stateTimer >= ATTACK1_RECOVERY) {
-                        enter(State.MOVE);
-                        nextA1Time = timeSinceStart + ATTACK_COOLDOWN + MathUtils.random(-ATTACK_COOLDOWN_JITTER, ATTACK_COOLDOWN_JITTER);
-                        if (nextA1Time < 0f) nextA1Time = 0f;
-                    }
-                    break;
-                case A2_WINDUP:
-                    if (stateTimer >= ATTACK2_WINDUP) enter(State.A2_ACTIVE);
-                    break;
-                case A2_ACTIVE:
-                    if (!hitApplied) tryApplyHit(ATTACK2_DAMAGE, ATTACK2_RANGE);
-                    if (stateTimer >= ATTACK2_ACTIVE) enter(State.A2_RECOVERY);
-                    break;
-                case A2_RECOVERY:
-                    if (stateTimer >= ATTACK2_RECOVERY) {
-                        enter(State.MOVE);
-                        nextA2Time = timeSinceStart + ATTACK_COOLDOWN + MathUtils.random(-ATTACK_COOLDOWN_JITTER, ATTACK_COOLDOWN_JITTER);
-                        if (nextA2Time < 0f) nextA2Time = 0f;
-                    }
-                    break;
-                case DEAD:
-                    break;
+        this.width = baseFrame.getRegionWidth() * SCALE;
+        this.height = baseFrame.getRegionHeight() * SCALE;
+
+        Gdx.app.log("IudexGundyr", "Boss cargado con dimensiones visuales: " + width + "x" + height);
+    }
+
+    private void createBossHitbox() {
+        // Crear hitbox más grande específica para el boss
+        // Destruir fixture actual del Enemy padre si existe
+        if (body.getFixtureList().size > 0) {
+            for (Fixture fixture : body.getFixtureList()) {
+                body.destroyFixture(fixture);
             }
         }
 
-        // Contadores de cooldown global
-        timeSinceStart += delta;
+        // Crear nueva hitbox más grande
+        PolygonShape bossShape = new PolygonShape();
+
+        // Hitbox más grande para boss (en metros Box2D)
+        float bossHalfWidth = 45f / Constants.PPM;  // ~45 píxeles de ancho = más grande
+        float bossHalfHeight = 55f / Constants.PPM; // ~55 píxeles de alto = más grande
+
+        bossShape.setAsBox(bossHalfWidth, bossHalfHeight);
+
+        FixtureDef bossFixtureDef = new FixtureDef();
+        bossFixtureDef.shape = bossShape;
+        bossFixtureDef.density = 2.0f; // Más denso que enemigos normales
+        bossFixtureDef.friction = 0.2f;
+        bossFixtureDef.filter.categoryBits = Constants.BIT_ENEMY;
+        bossFixtureDef.filter.maskBits = Constants.BIT_GROUND | Constants.BIT_PLAYER;
+
+        Fixture bossFixture = body.createFixture(bossFixtureDef);
+        bossFixture.setUserData("enemy"); // Mantener compatibilidad con ContactListener
+
+        bossShape.dispose();
+
+        Gdx.app.log("IudexGundyr", "Hitbox del boss creada: " +
+            (bossHalfWidth  * Constants.PPM) + "x" + (bossHalfHeight  * Constants.PPM) + " píxeles");
     }
 
-    private float timeSinceStart = 0f;
-    private float nextA1Time = 0f;
-    private float nextA2Time = 0f;
+    private void initializeBossStats() {
+        hp = MAX_HP;
+        currentState = BossState.IDLE;
+        stateTimer = 0f;
+        totalTime = 0f;
+        walkAnimTimer = 0f;
+        isWalking = false;
 
-    private boolean canUseAttack1() { return timeSinceStart >= nextA1Time; }
-    private boolean canUseAttack2() { return timeSinceStart >= nextA2Time; }
-
-    private void pursue(float delta) {
-        if (playerRef == null) return;
-        Vector2 vel = body.getLinearVelocity();
-        float dir = playerRef.getPosition().x > position.x ? 1f : -1f;
-        body.setLinearVelocity(dir * CHASE_SPEED, vel.y);
-        state = State.MOVE;
+        Gdx.app.log("IudexGundyr", "Boss inicializado con " + MAX_HP + " HP");
     }
 
-    private void enter(State s) {
-        state = s;
+    @Override
+    public void update(float delta) {
+        if (currentState == BossState.DEAD) return;
+
+        stateTimer += delta;
+        totalTime += delta;
+
+        // Sincronizar posición visual con física
+        position.set(
+            body.getPosition().x * Constants.PPM - width / 2f,
+            body.getPosition().y * Constants.PPM - height / 2f
+        );
+
+        // Detectar jugador
+        if (playerRef != null && !playerRef.isDead()) {
+            float distanceToPlayer = getDistanceToPlayer();
+            facingRight = playerRef.getPosition().x > position.x;
+
+            updateBossAI(delta, distanceToPlayer);
+        }
+
+        // Actualizar timer de animación de caminar
+        if (isWalking) {
+            walkAnimTimer += delta;
+        }
+
+    }
+
+    private void updateBossAI(float delta, float distanceToPlayer) {
+        // Resetear estado de caminar
+        isWalking = false;
+
+        switch (currentState) {
+            case IDLE:
+                // Transición a perseguir si el jugador está cerca
+                if (distanceToPlayer <= 350f) { // Aumentado por hitbox más grande
+                    changeState(BossState.CHASE);
+                }
+                break;
+
+            case CHASE:
+                isWalking = true; // Marcar que está caminando
+
+                // Decidir qué ataque usar basado en distancia
+                boolean canAttack1 = canUseAttack1() && distanceToPlayer <= ATTACK1_RANGE * SCALE;
+                boolean canAttack2 = canUseAttack2() && distanceToPlayer <= ATTACK2_RANGE * SCALE;
+
+                if (canAttack1 && canAttack2) {
+                    isWalking = false; // Parar de caminar antes del ataque
+                    // Elegir ataque basado en distancia
+                    if (distanceToPlayer < ATTACK1_RANGE * SCALE * 0.7f) {
+                        changeState(BossState.ATTACK1_WINDUP);
+                    } else {
+                        changeState(BossState.ATTACK2_WINDUP);
+                    }
+                } else if (canAttack1) {
+                    isWalking = false;
+                    changeState(BossState.ATTACK1_WINDUP);
+                } else if (canAttack2) {
+                    isWalking = false;
+                    changeState(BossState.ATTACK2_WINDUP);
+                } else {
+                    // Perseguir al jugador
+                    chasePlayer();
+                }
+                break;
+
+            case ATTACK1_WINDUP:
+                isWalking = false;
+                if (stateTimer >= ATTACK1_WINDUP) {
+                    changeState(BossState.ATTACK1_ACTIVE);
+                    executeAttack1();
+                }
+                break;
+
+            case ATTACK1_ACTIVE:
+                isWalking = false;
+                if (!hitApplied) {
+                    tryHitPlayer(ATTACK1_DAMAGE, ATTACK1_RANGE);
+                }
+                if (stateTimer >= ATTACK1_ACTIVE) {
+                    changeState(BossState.ATTACK1_RECOVERY);
+                    stopDash();
+                }
+                break;
+
+            case ATTACK1_RECOVERY:
+                isWalking = false;
+                if (stateTimer >= ATTACK1_RECOVERY) {
+                    nextAttack1Time = totalTime + ATTACK_COOLDOWN +
+                        MathUtils.random(-ATTACK_COOLDOWN_JITTER, ATTACK_COOLDOWN_JITTER);
+                    changeState(BossState.CHASE);
+                }
+                break;
+
+            case ATTACK2_WINDUP:
+                isWalking = false;
+                if (stateTimer >= ATTACK2_WINDUP) {
+                    changeState(BossState.ATTACK2_ACTIVE);
+                }
+                break;
+
+            case ATTACK2_ACTIVE:
+                isWalking = false;
+                if (!hitApplied) {
+                    tryHitPlayer(ATTACK2_DAMAGE, ATTACK2_RANGE);
+                }
+                if (stateTimer >= ATTACK2_ACTIVE) {
+                    changeState(BossState.ATTACK2_RECOVERY);
+                }
+                break;
+
+            case ATTACK2_RECOVERY:
+                isWalking = false;
+                if (stateTimer >= ATTACK2_RECOVERY) {
+                    nextAttack2Time = totalTime + ATTACK_COOLDOWN +
+                        MathUtils.random(-ATTACK_COOLDOWN_JITTER, ATTACK_COOLDOWN_JITTER);
+                    changeState(BossState.CHASE);
+                }
+                break;
+        }
+    }
+
+    private void changeState(BossState newState) {
+        currentState = newState;
         stateTimer = 0f;
         hitApplied = false;
+
+        // Log para debug
+        Gdx.app.log("IudexGundyr", "Estado cambiado a: " + newState.name());
     }
 
-    private void tryApplyHit(int damage, float range) {
+    private void chasePlayer() {
+        Vector2 velocity = body.getLinearVelocity();
+        float direction = facingRight ? 1f : -1f;
+        body.setLinearVelocity(direction * CHASE_SPEED, velocity.y);
+    }
+
+    private void executeAttack1() {
+        // Dash hacia el jugador
+        float direction = facingRight ? 1f : -1f;
+        body.setLinearVelocity(direction * ATTACK1_DASH_SPEED, body.getLinearVelocity().y);
+
+        // Sonido de ataque
+        try {
+            SoundManager.playSfx("assets/boss_attack1.wav");
+        } catch (Exception e) {
+            // Ignorar si no hay archivo de sonido
+        }
+    }
+
+    private void stopDash() {
+        // Frenar gradualmente el dash
+        Vector2 velocity = body.getLinearVelocity();
+        body.setLinearVelocity(velocity.x * 0.3f, velocity.y);
+    }
+
+    private void tryHitPlayer(int damage, float range) {
         if (playerRef == null || playerRef.isDead()) return;
-        float dist = Vector2.dst(position.x, position.y, playerRef.getPosition().x, playerRef.getPosition().y);
-        float effectiveRange = range * SCALE * 1.1f;
-        if (dist <= effectiveRange) {
+
+        // Centro del boss
+        float bossCenterX = position.x + width / 2f;
+        float bossCenterY = position.y + height / 2f;
+
+        // Centro del jugador
+        float playerCenterX = playerRef.getPosition().x + playerRef.getWidth() / 2f;
+        float playerCenterY = playerRef.getPosition().y + playerRef.getHeight() / 2f;
+
+        // Distancias en ejes
+        float dx = playerCenterX - bossCenterX;
+        float dy = Math.abs(playerCenterY - bossCenterY);
+
+        // Comprobar que el jugador esté al frente del boss
+        boolean playerInFront = (facingRight && dx > 0) || (!facingRight && dx < 0);
+
+        // Si está al frente y dentro del rango horizontal + vertical razonable
+        if (playerInFront && Math.abs(dx) <= range * SCALE && dy <= height * 0.6f) {
             playerRef.takeDamage(damage);
             hitApplied = true;
+            Gdx.app.log("IudexGundyr", "¡Golpeó al jugador (" + damage + " daño) desde " + (facingRight ? "derecha" : "izquierda") + "!");
         }
     }
 
-    // Daño recibido del jugador
+
+
+    private float getDistanceToPlayer() {
+        return Vector2.dst(
+            position.x + width / 2f, position.y + height / 2f,
+            playerRef.getPosition().x + playerRef.getWidth() / 2f,
+            playerRef.getPosition().y + playerRef.getHeight() / 2f
+        );
+    }
+
+    private boolean canUseAttack1() {
+        return totalTime >= nextAttack1Time;
+    }
+
+    private boolean canUseAttack2() {
+        return totalTime >= nextAttack2Time;
+    }
+
     @Override
     public void takeDamage(int damage) {
-        if (state == State.DEAD) return;
-        hp -= Math.max(0, damage);
+        if (currentState == BossState.DEAD) return;
+
+        hp = Math.max(0, hp - damage);
+
         if (hp <= 0) {
-            hp = 0;
-            state = State.DEAD;
+            currentState = BossState.DEAD;
             setActive(false);
+            Gdx.app.log("IudexGundyr", "¡Boss derrotado!");
+        } else {
+            Gdx.app.log("IudexGundyr", "Boss recibió " + damage + " daño. HP: " + hp + "/" + MAX_HP);
         }
     }
 
     @Override
-    public boolean isDead() {
-        return state == State.DEAD;
+    public void render(SpriteBatch batch) {
+        if (!active || currentState == BossState.DEAD) return;
+
+        // Seleccionar animación apropiada - CORREGIDO
+        TextureRegion currentFrame = getCurrentAnimationFrame();
+
+        if (currentFrame != null) {
+            // Dibujar con escala y orientación correcta
+            float drawWidth = currentFrame.getRegionWidth() * SCALE;
+            float drawHeight = currentFrame.getRegionHeight() * SCALE;
+
+            if (facingRight) {
+                batch.draw(currentFrame, position.x + drawWidth, position.y, -drawWidth, drawHeight);
+            } else {
+                batch.draw(currentFrame, position.x, position.y, drawWidth, drawHeight);
+            }
+        } else {
+            // Fallback: usar textura base
+            Gdx.app.log("IudexGundyr", "Usando fallback texture");
+            if (facingRight) {
+                batch.draw(texture, position.x + width, position.y, -width, height);
+            } else {
+                batch.draw(texture, position.x, position.y, width, height);
+            }
+        }
+
+
+
     }
 
+    private TextureRegion getCurrentAnimationFrame() {
+        switch (currentState) {
+            case ATTACK1_WINDUP:
+            case ATTACK1_ACTIVE:
+            case ATTACK1_RECOVERY:
+                return bossAttack1Anim != null
+                    ? bossAttack1Anim.getKeyFrame(stateTimer, false)
+                    : bossIdleAnim.getKeyFrame(totalTime, true);
+
+            case ATTACK2_WINDUP:
+            case ATTACK2_ACTIVE:
+            case ATTACK2_RECOVERY:
+                return bossAttack2Anim != null
+                    ? bossAttack2Anim.getKeyFrame(stateTimer, false)
+                    : bossIdleAnim.getKeyFrame(totalTime, true);
+
+            case CHASE:
+                if (isWalking && bossWalkAnim != null) {
+                    return bossWalkAnim.getKeyFrame(walkAnimTimer, true);
+                }
+                return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
+
+            case IDLE:
+            default:
+                return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
+        }
+    }
+
+
+
+
+    // === Getters ===
     @Override
     public int getCurrentHealth() {
         return hp;
@@ -258,47 +507,40 @@ public class IudexGundyr extends Enemy {
         return MAX_HP;
     }
 
-    // Render personalizado con selección de animación
     @Override
-    public void render(SpriteBatch batch) {
-        if (!active || state == State.DEAD) return;
-
-        TextureRegion frame = null;
-        switch (state) {
-            case A1_WINDUP:
-            case A1_ACTIVE:
-            case A1_RECOVERY:
-                if (attack1Anim != null) frame = attack1Anim.getKeyFrame(stateTimer);
-                break;
-            case A2_WINDUP:
-            case A2_ACTIVE:
-            case A2_RECOVERY:
-                if (attack2Anim != null) frame = attack2Anim.getKeyFrame(stateTimer);
-                break;
-            case MOVE:
-                if (walkAnim != null) frame = walkAnim.getKeyFrame(animTime);
-                break;
-            case IDLE:
-            default:
-                if (idleAnim != null) frame = idleAnim.getKeyFrame(animTime);
-                break;
-        }
-        if (frame == null) {
-            // fallback: usar textura base del Enemy
-            batch.draw(texture, position.x, position.y, width, height);
-            return;
-        }
-        if (facingRight) {
-            // dibujar mirando a la derecha (flip X)
-            batch.draw(frame, position.x + width, position.y, -width, height);
-        } else {
-            batch.draw(frame, position.x, position.y, width, height);
-        }
+    public boolean isDead() {
+        return currentState == BossState.DEAD;
     }
 
-    // Integración con el ContactListener del juego
+    public BossState getCurrentState() {
+        return currentState;
+    }
+
+    // === Configuración externa ===
+    public void setMaxHp(int maxHp) {
+        this.MAX_HP = maxHp;
+        if (hp > MAX_HP) hp = MAX_HP;
+    }
+
+    public void setScale(float scale) {
+        this.SCALE = Math.max(0.1f, scale);
+    }
+
+    public void setAttack1Damage(int damage) {
+        this.ATTACK1_DAMAGE = damage;
+    }
+
+    public void setAttack2Damage(int damage) {
+        this.ATTACK2_DAMAGE = damage;
+    }
+
     @Override
-    public void setGrounded(boolean grounded) { this.grounded = grounded; }
-    @Override
-    public boolean isGrounded() { return grounded; }
+    public void dispose() {
+        super.dispose();
+
+        if (idleTexture != null) idleTexture.dispose();
+        if (walkTexture != null) walkTexture.dispose();
+        if (attack1Texture != null) attack1Texture.dispose();
+        if (attack2Texture != null) attack2Texture.dispose();
+    }
 }
