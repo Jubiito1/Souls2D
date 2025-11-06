@@ -8,9 +8,9 @@ import com.TfPooAs.Souls2D.entities.NPC;
 public class FireKeeper extends NPC {
 
     private final String[] dialog = new String[]{
-        "Ashen One, welcome to the bonfire.",
-        "Speak thine heart’s desire.",
-        "Very well. Then touch the darkness within me..."
+        "Haz permitido el acceso al santuario del enlace de fuego",
+        "La llama primigenia estará eternamente agradecida",
+        "Puedes volver a ser parte de ella..."
     };
 
     public FireKeeper(float x, float y) {
