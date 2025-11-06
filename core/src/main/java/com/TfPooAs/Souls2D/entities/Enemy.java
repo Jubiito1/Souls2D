@@ -1,7 +1,10 @@
 package com.TfPooAs.Souls2D.entities;
 
+import com.TfPooAs.Souls2D.utils.AnimationUtils;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.Color;
@@ -50,15 +53,59 @@ public class Enemy extends Entity {
     private float jumpCooldown = 0f; // cooldown para saltos
     private final float JUMP_COOLDOWN_TIME = 1f; // tiempo entre saltos
 
+    private Animation<TextureRegion> idleAnim;
+    private Animation<TextureRegion> attackAnim;
+    private Animation<TextureRegion> walkAnim;
+    private Texture idleSheetTexture;
+    private Texture walkSheetTexture;
+    private Texture attackSheetTexture;
+
+
     public Enemy(World world, float x, float y, Player player) {
-        super(x, y, "enemy-attack.png"); // sprite base del enemigo
+        super(x, y, "enemy-attack.png");
         this.world = world;
         this.player = player;
-        this.attackTexture = new Texture("enemy-attack.png"); // sprite de ataque
-        createBody(x, y);
+        this.attackTexture = new Texture("enemy-attack.png");
+
+        // === Animaciones ===
+        AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy-idle.png", 4, 1, 0.12f, Animation.PlayMode.LOOP);
+        if (idlePair != null) {
+            this.idleAnim = idlePair.animation;
+            this.idleSheetTexture = idlePair.texture;
+        }
+
+        AnimationUtils.AnimWithTexture attackPair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy-attack.png", 11, 1, 0.07f, Animation.PlayMode.NORMAL);
+        if (attackPair != null) {
+            this.attackAnim = attackPair.animation;
+            this.attackSheetTexture = attackPair.texture;
+        }
+
+        AnimationUtils.AnimWithTexture walkPair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy-walk.png", 4, 1, 0.10f, Animation.PlayMode.LOOP);
+        if (walkPair != null) {
+            this.walkAnim = walkPair.animation;
+            this.walkSheetTexture = walkPair.texture;
+        }
+
+
+        // Determinar ancho/alto de frame base (usa idle si existe, si no usa walk)
+        TextureRegion baseFrame = (idleAnim != null)
+            ? idleAnim.getKeyFrame(0)
+            : (walkAnim != null ? walkAnim.getKeyFrame(0) : new TextureRegion(texture));
+
+        this.width = baseFrame.getRegionWidth();
+        this.height = baseFrame.getRegionHeight();
+
+
+        // Crear el cuerpo del tamaño exacto del frame
+        createBody(x, y, width, height);
     }
 
-    private void createBody(float x, float y) {
+
+
+    private void createBody(float x, float y, float frameWidth, float frameHeight) {
         BodyDef bdef = new BodyDef();
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.position.set(x / Constants.PPM, y / Constants.PPM);
@@ -66,18 +113,30 @@ public class Enemy extends Entity {
         body = world.createBody(bdef);
 
         PolygonShape shape = new PolygonShape();
-        shape.setAsBox(width / 2f / Constants.PPM, height / 2f / Constants.PPM);
+
+        // === Definir tamaño físico exacto (en píxeles del sprite) ===
+        // Si tu enemigo mide 64x64 píxeles en el sprite
+        float spriteWidth = 75f;
+        float spriteHeight = 64f;
+
+        // Convertir de píxeles a metros (Box2D usa metros)
+        float halfW = (spriteWidth / 2f) / Constants.PPM;
+        float halfH = (spriteHeight / 2f) / Constants.PPM;
+
+        // Crear la forma del cuerpo con esas dimensiones
+        shape.setAsBox(halfW, halfH);
 
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
         fdef.density = 1f;
-        fdef.friction = 0f; // sin fricción como el player
+        fdef.friction = 0f;
         fdef.filter.categoryBits = Constants.BIT_ENEMY;
         fdef.filter.maskBits = Constants.BIT_GROUND;
 
         body.createFixture(fdef).setUserData("enemy");
         shape.dispose();
     }
+
 
     @Override
     public void update(float delta) {
@@ -252,15 +311,24 @@ public class Enemy extends Entity {
     public void render(SpriteBatch batch) {
         if (!active || isDead) return;
 
-        Texture currentTexture = isAttacking ? attackTexture : texture;
+        TextureRegion currentFrame;
+        float stateTime = (System.currentTimeMillis() % 100000) / 1000f;
 
-        // Renderizar según la dirección que mira
-        if (facingRight) {
-            batch.draw(currentTexture, position.x, position.y, width, height);
-        } else {
-            // Voltear horizontalmente cuando mira a la izquierda
-            batch.draw(currentTexture, position.x + width, position.y, -width, height);
-        }
+
+        if (isAttacking && attackAnim != null)
+            currentFrame = attackAnim.getKeyFrame(stateTime, false);
+        else if (playerDetected && walkAnim != null)
+            currentFrame = walkAnim.getKeyFrame(stateTime, true);
+        else if (idleAnim != null)
+            currentFrame = idleAnim.getKeyFrame(stateTime, true);
+        else
+            currentFrame = new TextureRegion(texture);
+
+        if (facingRight)
+            batch.draw(currentFrame, position.x, position.y, width, height);
+        else
+            batch.draw(currentFrame, position.x + width, position.y, -width, height);
+
 
         // === Barra de vida encima del enemigo ===
         // Lazy-init de textura blanca 1x1 para rectángulos
@@ -315,8 +383,14 @@ public class Enemy extends Entity {
     @Override
     public void dispose() {
         super.dispose();
-        if (attackTexture != null) {
-            attackTexture.dispose();
+        if (idleSheetTexture != null) {
+            idleSheetTexture.dispose();
+        }
+        if (attackSheetTexture != null) {
+            attackSheetTexture.dispose();
+        }
+        if (walkSheetTexture != null) {
+            walkSheetTexture.dispose();
         }
     }
 }

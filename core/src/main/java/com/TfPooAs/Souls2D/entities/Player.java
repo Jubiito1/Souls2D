@@ -65,8 +65,8 @@ public class Player extends Entity {
     private Animation<TextureRegion> jumpAnim;
     private float stateTime = 0f;
     private float jumpTimer = 0f;
-    private Texture idleSheetTexture; // solo si cargamos spritesheet
-    private Texture attackSheetTexture; // solo si cargamos spritesheet
+    private Texture idleSheetTexture;
+    private Texture attackSheetTexture;
     private Texture walkSheetTexture;
     private Texture healSheetTexture;
     private Texture rollSheetTexture;

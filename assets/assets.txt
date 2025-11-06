@@ -9,6 +9,7 @@ caballeroJump-Sheet.png
 caballeroRoll-Sheet.png
 caballeroWalk-Sheet.png
 enemy-attack.png
+enemy-idle.png
 enemy-walk.png
 estus.png
 hoguera.png
