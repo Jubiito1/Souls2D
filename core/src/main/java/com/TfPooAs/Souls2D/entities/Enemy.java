@@ -39,7 +39,6 @@ public class Enemy extends Entity {
     private boolean facingRight = true;
 
     // === Sistema de ataque ===
-    private Texture attackTexture;
     private boolean isAttacking = false;
     private float attackTimer = 0f;
     private final float ATTACK_DURATION = 0.5f; // duración del ataque
@@ -73,7 +72,6 @@ public class Enemy extends Entity {
         super(x, y, "enemy-idle.png");
         this.world = world;
         this.player = player;
-        this.attackTexture = new Texture("enemy-attack.png");
 
         // === Animaciones ===
 
@@ -289,7 +287,7 @@ public class Enemy extends Entity {
         body.setLinearVelocity(attackDirection * ATTACK_FORCE, body.getLinearVelocity().y);
 
         // SFX: slash del enemigo
-        SoundManager.playSfx("assets/enemy_slash.wav");
+        SoundManager.playSfx("enemy_slash.wav");
 
         System.out.println("¡Enemigo atacando!");
     }

@@ -12,6 +12,8 @@ import java.util.Map;
  * Simple audio manager:
  * - Background music controls (safe if file missing).
  * - One-shot and looping SFX with simple caching.
+ * Path convention: pass internal paths relative to the assets root (e.g., "musica.wav" or "ui/menu_bg.png").
+ * For backward-compatibility, a leading "assets/" prefix is also accepted and will be stripped automatically.
  */
 public class SoundManager {
     private static Music currentMusic;
@@ -25,6 +27,14 @@ public class SoundManager {
 
     private SoundManager() {}
 
+    private static String normalize(String internalPath) {
+        if (internalPath == null) return null;
+        String p = internalPath.trim();
+        if (p.startsWith("assets/")) p = p.substring("assets/".length());
+        if (p.startsWith("/")) p = p.substring(1);
+        return p;
+    }
+
     /**
      * Plays a background music by path. If the same path is already playing, it just ensures looping/volume.
      * Path is resolved with Gdx.files.internal(). Use the same convention as the rest of the project
@@ -32,7 +42,8 @@ public class SoundManager {
      */
     public static void playBackground(String internalPath, boolean loop) {
         try {
-            if (currentMusic != null && internalPath != null && internalPath.equals(currentPath)) {
+            String p = normalize(internalPath);
+            if (currentMusic != null && p != null && p.equals(currentPath)) {
                 // Already loaded the same track: ensure settings and play if not playing
                 currentMusic.setLooping(loop);
                 currentMusic.setVolume(musicVolume);
@@ -44,15 +55,15 @@ public class SoundManager {
             stopBackground();
             disposeBackground();
 
-            currentPath = internalPath;
-            if (internalPath == null || internalPath.isEmpty()) {
+            currentPath = p;
+            if (p == null || p.isEmpty()) {
                 Gdx.app.log("SoundManager", "No background path provided.");
                 return;
             }
 
-            FileHandle fh = Gdx.files.internal(internalPath);
+            FileHandle fh = Gdx.files.internal(p);
             if (!fh.exists()) {
-                Gdx.app.error("SoundManager", "Audio file not found: " + internalPath);
+                Gdx.app.error("SoundManager", "Audio file not found: " + p);
                 currentPath = null;
                 return;
             }
@@ -112,16 +123,17 @@ public class SoundManager {
     // ===== SFX =====
     private static Sound getOrLoadSound(String internalPath) {
         try {
-            if (internalPath == null || internalPath.isEmpty()) return null;
-            Sound s = sfxCache.get(internalPath);
+            String p = normalize(internalPath);
+            if (p == null || p.isEmpty()) return null;
+            Sound s = sfxCache.get(p);
             if (s != null) return s;
-            FileHandle fh = Gdx.files.internal(internalPath);
+            FileHandle fh = Gdx.files.internal(p);
             if (!fh.exists()) {
-                Gdx.app.error("SoundManager", "SFX file not found: " + internalPath);
+                Gdx.app.error("SoundManager", "SFX file not found: " + p);
                 return null;
             }
             s = Gdx.audio.newSound(fh);
-            sfxCache.put(internalPath, s);
+            sfxCache.put(p, s);
             return s;
         } catch (Exception e) {
             Gdx.app.error("SoundManager", "Failed to load SFX: " + internalPath + ": " + e.getMessage());
@@ -140,19 +152,22 @@ public class SoundManager {
     /** Ensure a looping SFX is playing under the given key (uses the path as key). */
     public static void ensureLooping(String internalPath) {
         try {
-            if (loopingSfxIds.containsKey(internalPath)) return; // already looping
-            Sound s = getOrLoadSound(internalPath);
+            String p = normalize(internalPath);
+            if (p == null || p.isEmpty()) return;
+            if (loopingSfxIds.containsKey(p)) return; // already looping
+            Sound s = getOrLoadSound(p);
             if (s == null) return;
             long id = s.loop(sfxVolume);
-            loopingSfxIds.put(internalPath, id);
+            loopingSfxIds.put(p, id);
         } catch (Exception ignored) { }
     }
 
     /** Stop a previously started loop for this path. */
     public static void stopLoop(String internalPath) {
         try {
-            Long id = loopingSfxIds.remove(internalPath);
-            Sound s = sfxCache.get(internalPath);
+            String p = normalize(internalPath);
+            Long id = loopingSfxIds.remove(p);
+            Sound s = sfxCache.get(p);
             if (s != null && id != null) s.stop(id);
         } catch (Exception ignored) { }
     }

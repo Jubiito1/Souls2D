@@ -314,9 +314,9 @@ public class Player extends Entity {
             boolean movingHoriz = Math.abs(body.getLinearVelocity().x) > 0.08f;
             // Debe sonar si se mueve en una dirección y está tocando el piso
             if (isGrounded && movingHoriz && !isRolling && !isAttacking) {
-                SoundManager.ensureLooping("assets/walk.wav");
+                SoundManager.ensureLooping("walk.wav");
             } else {
-                SoundManager.stopLoop("assets/walk.wav");
+                SoundManager.stopLoop("walk.wav");
             }
         } catch (Exception ignored) { }
 
@@ -388,7 +388,7 @@ public class Player extends Entity {
             if (canSpendPercent(STAM_COST_JUMP)) {
                 spendStaminaPercent(STAM_COST_JUMP);
                 body.applyLinearImpulse(new Vector2(0, jumpForce), body.getWorldCenter(), true);
-                SoundManager.playSfx("assets/jump.wav");
+                SoundManager.playSfx("jump.wav");
             } else {
                 // sin stamina suficiente, no salta
             }
@@ -445,7 +445,7 @@ public class Player extends Entity {
         body.setLinearVelocity(dir * ROLL_SPEED, vel.y);
 
         // SFX: roll
-        SoundManager.playSfx("assets/roll.wav");
+        SoundManager.playSfx("roll.wav");
 
         // Reducir hitbox a la mitad de alto manteniendo los pies a la misma altura.
         recreateFixtureForCurrentState();

@@ -33,12 +33,11 @@ public class EnemyProjectile extends Entity {
         // Cargar textura del proyectil si no está cargada
         if (projectileTexture == null) {
             try {
-                // CAMBIAR "proyectil.png" por el nombre de tu archivo de imagen
-                projectileTexture = new Texture("flecha.png");
+                projectileTexture = new Texture(com.badlogic.gdx.Gdx.files.internal("flecha.png"));
             } catch (Exception e) {
                 // Si no se encuentra la imagen, usar fallback
                 projectileTexture = null;
-                System.out.println("No se pudo cargar 'proyectil.png', usando textura blanca como fallback");
+                System.out.println("No se pudo cargar 'flecha.png', usando textura blanca como fallback");
             }
         }
 

@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFont
 public class Assets {
 
     public static BitmapFont generateGaramond(int size) {
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("ui/Garamond.otf"));
         FreeTypeFontParameter parameter = new FreeTypeFontParameter();
         parameter.size = size; // tamaño de la fuente, ej: 24
         parameter.borderWidth = 0;

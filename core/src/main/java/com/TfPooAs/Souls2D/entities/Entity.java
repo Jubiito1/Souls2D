@@ -3,6 +3,7 @@ package com.TfPooAs.Souls2D.entities;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.Gdx;
 
 public abstract class Entity {
     protected Vector2 position;
@@ -12,7 +13,13 @@ public abstract class Entity {
 
     public Entity(float x, float y, String texturePath) {
         this.position = new Vector2(x, y);
-        this.texture = new Texture(texturePath);
+        // Load textures via internal file handle; allow relative paths (no leading assets/)
+        try {
+            this.texture = new Texture(Gdx.files.internal(texturePath.startsWith("assets/") ? texturePath.substring(7) : texturePath));
+        } catch (Exception e) {
+            // As a fallback, try the raw path (legacy behavior)
+            this.texture = new Texture(texturePath);
+        }
         this.width = texture.getWidth();
         this.height = texture.getHeight();
     }

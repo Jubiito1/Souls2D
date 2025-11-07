@@ -29,4 +29,12 @@ public class Background {
                 camera.position.y - layers[i].getHeight() / 2f);
         }
     }
+
+    public void dispose() {
+        if (layers != null) {
+            for (Texture t : layers) {
+                if (t != null) t.dispose();
+            }
+        }
+    }
 }
