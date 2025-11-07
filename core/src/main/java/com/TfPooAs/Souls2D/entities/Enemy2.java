@@ -330,7 +330,9 @@ public class Enemy2 extends Entity {
     @Override
     public void dispose() {
         super.dispose();
+        if (idleSheetTexture != null) idleSheetTexture.dispose();
         if (walkSheetTexture != null) walkSheetTexture.dispose();
         if (attackSheetTexture != null) attackSheetTexture.dispose();
+        if (deathSheetTexture != null) deathSheetTexture.dispose();
     }
 }

@@ -386,6 +386,24 @@ public class Enemy extends Entity {
             currentFrame = new TextureRegion(texture);
         }
 
+        if (isDying && deathAnim != null && currentFrame != null) {
+            // Dibujar animación de muerte alineada al centro del cuerpo y usando el tamaño real del frame
+            float drawW = currentFrame.getRegionWidth();
+            float drawH = currentFrame.getRegionHeight();
+            float centerX = body != null ? body.getPosition().x * Constants.PPM : (position.x + width / 2f);
+            float drawX = centerX - drawW / 2f;
+            // Alinear por los "pies": mantener la base (bottom) constante para evitar saltos verticales
+            float drawY = position.y; // base del sprite anterior
+
+            if (!facingRight) {
+                batch.draw(currentFrame, drawX, drawY, drawW, drawH);
+            } else {
+                batch.draw(currentFrame, drawX + drawW, drawY, -drawW, drawH);
+            }
+            // No dibujar barra de vida durante animación de muerte
+            return;
+        }
+
         if (!facingRight)
             batch.draw(currentFrame, position.x, position.y, width, height);
         else

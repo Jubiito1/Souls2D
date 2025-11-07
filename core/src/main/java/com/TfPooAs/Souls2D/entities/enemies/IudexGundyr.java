@@ -232,13 +232,17 @@ public class IudexGundyr extends Enemy {
     @Override
     public void update(float delta) {
         if (currentState == BossState.DEAD) {
-            // avanzar anim de muerte si existe
+            // Avanzar anim de muerte y finalizar cuando termine
             if (!deathAnimStarted) {
                 deathAnimStarted = true;
                 deathTimer = 0f;
                 try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) {}
             } else {
                 deathTimer += delta;
+            }
+            // Si hay animación de muerte, esperar a que termine para desactivar
+            if (bossDeathAnim != null && bossDeathAnim.isAnimationFinished(deathTimer)) {
+                setActive(false);
             }
             return;
         }
@@ -457,7 +461,23 @@ public class IudexGundyr extends Enemy {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || currentState == BossState.DEAD) return;
+        // Si está en estado de muerte, dibujar animación de muerte si existe
+        if (currentState == BossState.DEAD) {
+            if (bossDeathAnim != null) {
+                TextureRegion deathFrame = bossDeathAnim.getKeyFrame(deathTimer, false);
+                if (deathFrame != null) {
+                    float drawWidth = deathFrame.getRegionWidth() * SCALE;
+                    float drawHeight = deathFrame.getRegionHeight() * SCALE;
+                    if (facingRight) {
+                        batch.draw(deathFrame, position.x + drawWidth, position.y, -drawWidth, drawHeight);
+                    } else {
+                        batch.draw(deathFrame, position.x, position.y, drawWidth, drawHeight);
+                    }
+                }
+            }
+            return;
+        }
+        if (!active) return;
 
         // Seleccionar animación apropiada - CORREGIDO
         TextureRegion currentFrame = getCurrentAnimationFrame();
@@ -481,9 +501,6 @@ public class IudexGundyr extends Enemy {
                 batch.draw(texture, position.x, position.y, width, height);
             }
         }
-
-
-
     }
 
     private TextureRegion getCurrentAnimationFrame() {
