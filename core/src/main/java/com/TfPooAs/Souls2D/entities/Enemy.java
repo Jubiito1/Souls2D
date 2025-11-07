@@ -107,14 +107,16 @@ public class Enemy extends Entity {
             this.walkSheetTexture = walkPair.texture;
         }
 
-        // Muerte (columnas auto)
 
-        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
-            "enemy1-death-Sheet.png", 4,0.10f, Animation.PlayMode.NORMAL);
+
+        // Muerte (5 columnas, 1 fila)
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy1-death-Sheet.png", 5, 1, 0.10f, Animation.PlayMode.NORMAL);
         if (deathPair != null) {
             this.deathAnim = deathPair.animation;
             this.deathSheetTexture = deathPair.texture;
         }
+
 
 
         // Determinar ancho/alto de frame base (usa idle si existe, si no usa walk)
