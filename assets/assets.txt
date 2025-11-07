@@ -5,6 +5,7 @@ Iudex-Death-Sheet.png
 arrow_shoot.wav
 backgrounds/fondo.png
 backgrounds/fondo2.png
+bossmusic.wav
 caballeroAtaque-Sheet.png
 caballeroEstus-Sheet.png
 caballeroIdle-Sheet.png

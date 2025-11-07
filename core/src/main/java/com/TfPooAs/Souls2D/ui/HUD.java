@@ -1,7 +1,9 @@
+
 package com.TfPooAs.Souls2D.ui;
 
 import com.TfPooAs.Souls2D.entities.Player;
 import com.TfPooAs.Souls2D.entities.Enemy;
+import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -38,6 +40,9 @@ public class HUD {
     private static final float ANCHO_BARRA_BOSS = 900f;
     private static final float ALTO_BARRA_BOSS = 28f;
     private static final float MARGEN_INFERIOR_BOSS = 40f;
+
+    // NUEVO: Control de música del boss
+    private boolean bossMusicStarted = false;
 
     public HUD(Player player) {
         this.player = player;
@@ -124,7 +129,24 @@ public class HUD {
         }
 
         // === Barra de vida del Boss (inferior, centrada) ===
-        if (boss != null && boss.isActive() && !boss.isDead() && isBossCloseEnough()) {
+        boolean bossVisible = boss != null && boss.isActive() && !boss.isDead() && isBossCloseEnough();
+
+        // NUEVO: Gestionar música del boss
+        if (bossVisible && !bossMusicStarted) {
+            // Iniciar música del boss
+            SoundManager.stopBackground(); // Parar música normal
+            SoundManager.playBackground("bossmusic.wav", true); // Iniciar música del boss
+            bossMusicStarted = true;
+            Gdx.app.log("HUD", "Iniciando música del boss");
+        } else if (!bossVisible && bossMusicStarted) {
+            // El boss ya no está visible, volver a música normal
+            SoundManager.stopBackground(); // Parar música del boss
+            SoundManager.playBackground("musica.wav", true); // Volver a música normal
+            bossMusicStarted = false;
+            Gdx.app.log("HUD", "Volviendo a música normal");
+        }
+
+        if (bossVisible) {
             float barX = (uiCamera.viewportWidth - ANCHO_BARRA_BOSS) / 2f;
             float barY = MARGEN_INFERIOR_BOSS;
             // panel
@@ -172,7 +194,7 @@ public class HUD {
         font.draw(uiBatch, numeroEstus, numeroX, numeroY);
 
         // Texto del Boss centrado sobre la barra (si visible)
-        if (boss != null && boss.isActive() && !boss.isDead() && isBossCloseEnough()) {
+        if (bossVisible) {
             String bossName = "Iudex Gundyr";
             layout.setText(font, bossName);
             float textX = (uiCamera.viewportWidth - layout.width) / 2f;
@@ -197,6 +219,11 @@ public class HUD {
         float dist2 = dx*dx + dy*dy;
         float max = 800f; // umbral configurable de proximidad visual
         return dist2 <= max*max;
+    }
+
+    // NUEVO: Método para resetear el estado de música del boss (útil cuando se reinicia el juego)
+    public void resetBossMusic() {
+        bossMusicStarted = false;
     }
 
     public void dispose() {
