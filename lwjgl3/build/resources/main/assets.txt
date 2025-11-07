@@ -36,6 +36,7 @@ musica.wav
 pausa.wav
 roll.wav
 slash_player.wav
+soul_orb.png
 ui/Garamond.otf
 ui/font-list.fnt
 ui/font-subtitle.fnt

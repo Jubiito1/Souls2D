@@ -1,5 +1,6 @@
 package com.TfPooAs.Souls2D.screens;
 
+import com.TfPooAs.Souls2D.entities.*;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -16,22 +17,22 @@ import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
-import com.TfPooAs.Souls2D.entities.Enemy;
-import com.TfPooAs.Souls2D.entities.Enemy2;
-import com.TfPooAs.Souls2D.entities.EnemyProjectile;
 import com.TfPooAs.Souls2D.entities.enemies.IudexGundyr;
 
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.core.Main;
 import com.TfPooAs.Souls2D.world.LevelLoader;
 import com.TfPooAs.Souls2D.world.TileMapRenderer;
-import com.TfPooAs.Souls2D.entities.Player;
 import com.TfPooAs.Souls2D.entities.items.Bonfire;
 import com.TfPooAs.Souls2D.entities.npcs.FireKeeper;
 import com.TfPooAs.Souls2D.world.Background;
 import com.TfPooAs.Souls2D.systems.SaveSystem;
 import com.TfPooAs.Souls2D.systems.SoundManager;
 import com.TfPooAs.Souls2D.ui.HUD;
+import java.util.ArrayList;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
+
 
 public class GameScreen implements Screen {
 
@@ -72,6 +73,9 @@ public class GameScreen implements Screen {
     private float bossSpawnX = 10500f;
     private float bossSpawnY = 2170f;
 
+
+    // Souls
+    private ArrayList<SoulOrb> soulOrbs = new ArrayList<>();
 
     // Overlays
     private PauseOverlay pauseOverlay;
@@ -308,7 +312,6 @@ public class GameScreen implements Screen {
         if (hud != null && boss != null) {
             hud.setBoss(boss);
         }
-
     }
 
     @Override
@@ -321,6 +324,8 @@ public class GameScreen implements Screen {
             SoundManager.pauseBackground();
             // Play death SFX once when death menu appears
             try { SoundManager.playSfx("assets/death.wav"); } catch (Exception ignored) { }
+            for (SoulOrb orb : soulOrbs) orb.render(batch);
+
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
@@ -348,6 +353,7 @@ public class GameScreen implements Screen {
                 Enemy e = enemies.get(i);
                 e.update(delta);
                 if (e.isDead()) {
+                    spawnSoulOrbs(e.getX(), e.getY(), e.getSoulValue()); // genera almas
                     // Quitar enemigos muertos
                     if (player != null) player.removeEnemy(e);
                     e.dispose();
@@ -405,6 +411,7 @@ public class GameScreen implements Screen {
         for (Enemy e : enemies) e.render(batch); // enemigos melee
         for (Enemy2 e2 : rangedEnemies) e2.render(batch); // enemigos a distancia
         for (EnemyProjectile p : enemyProjectiles) p.render(batch); // proyectiles enemigos
+        for (SoulOrb orb : soulOrbs) orb.render(batch);
         batch.end();
 
         // Debug opcional
@@ -424,6 +431,14 @@ public class GameScreen implements Screen {
             hud.render(uiCamera, batch);
         }
     }
+
+    public void spawnSoulOrbs(float x, float y, int soulAmount) {
+        int orbCount = Math.max(1, soulAmount / 50); // genera 1 orb cada 50 almas
+        for (int i = 0; i < orbCount; i++) {
+            soulOrbs.add(new SoulOrb(x, y));
+        }
+    }
+
 
     @Override
     public void resize(int width, int height) {

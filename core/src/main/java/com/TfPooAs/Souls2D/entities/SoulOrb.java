@@ -1,60 +1,44 @@
 package com.TfPooAs.Souls2D.entities;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.TfPooAs.Souls2D.entities.Player;
 
 public class SoulOrb {
+    private Texture texture;
     private Vector2 position;
-    private int soulsAmount;
-    private TextureRegion texture;
-    private boolean collected;
-    private float floatTimer;
-    private float baseY; // <- NUEVO
-    private Rectangle bounds;
+    private boolean collected = false;
+    private float speed = 150f;
 
-    public SoulOrb(Vector2 position, int soulsAmount, TextureRegion texture) {
-        this.position = new Vector2(position);
-        this.baseY = position.y; // Guarda la Y base
-        this.soulsAmount = soulsAmount;
-        this.texture = texture;
-        this.collected = false;
-        this.bounds = new Rectangle(position.x, position.y,
-            texture.getRegionWidth(), texture.getRegionHeight());
+    public SoulOrb(float x, float y) {
+        this.position = new Vector2(x, y);
+        this.texture = new Texture("soul_orb.png");
     }
 
-    public void update(float delta) {
+    public void update(float delta, Player player) {
         if (collected) return;
-        floatTimer += delta;
-        // Oscila alrededor de baseY
-        position.y = baseY + (float)Math.sin(floatTimer * 2f) * 5f; // 5 píxeles de amplitud
-        bounds.setPosition(position.x, position.y);
+
+        float dist = player.getPosition().dst(position);
+        if (dist < 100) {
+            // se mueve hacia el jugador
+            Vector2 dir = new Vector2(player.getPosition()).sub(position).nor();
+            position.add(dir.scl(speed * delta));
+        }
+
+        // si está muy cerca, se "recoge"
+        if (dist < 30) {
+            collected = true;
+            player.addSouls(50); // suma 50 almas (podés cambiar el valor)
+        }
     }
 
     public void render(SpriteBatch batch) {
-        if (!collected) {
-            batch.draw(texture, position.x, position.y);
-        }
+        if (!collected)
+            batch.draw(texture, position.x, position.y, 32, 32);
     }
 
-    public boolean checkCollision(Rectangle playerBounds) {
-        if (!collected && playerBounds.overlaps(bounds)) {
-            collected = true;
-            return true;
-        }
-        return false;
-    }
+    public boolean isCollected() { return collected; }
 
-    public boolean isCollected() {
-        return collected;
-    }
-
-    public int getSoulsAmount() {
-        return soulsAmount;
-    }
-
-    public Vector2 getPosition() {
-        return position;
-    }
+    public void dispose() { texture.dispose(); }
 }

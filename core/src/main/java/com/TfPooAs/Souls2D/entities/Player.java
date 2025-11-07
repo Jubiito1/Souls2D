@@ -106,6 +106,9 @@ public class Player extends Entity {
     private Array<Enemy> enemies;
     private Array<Enemy2> rangedEnemies;
 
+    // Soul
+    private int souls = 0;
+
 
     public Player(World world, float x, float y) {
         super(x, y, "caballeroIdle-Sheet.png");
@@ -190,6 +193,28 @@ public class Player extends Entity {
     public void removeRangedEnemy(Enemy2 enemy) {
         rangedEnemies.removeValue(enemy, true);
     }
+
+    // Metodo para recoger souls
+    // Sumar almas (uso cuando el jugador recoge un SoulOrb)
+    public void addSouls(int amount) {
+        if (amount <= 0) return;
+        this.souls += amount;
+        // opcional: reproducir SFX
+        try { SoundManager.playSfx("assets/soul_pickup.wav"); } catch (Exception ignored) {}
+        // opcional: feedback visual (puedes mostrar un +N sobre la cabeza)
+        System.out.println("Recogiste " + amount + " almas. Total: " + this.souls);
+    }
+
+    // Obtener la cantidad actual
+    public int getSouls() {
+        return this.souls;
+    }
+
+    // Setear (por ejemplo al cargar partida)
+    public void setSouls(int amount) {
+        this.souls = Math.max(0, amount);
+    }
+
 
 
     private Fixture currentFixture;

@@ -1,5 +1,6 @@
 package com.TfPooAs.Souls2D.entities;
 
+import com.TfPooAs.Souls2D.screens.GameScreen;
 import com.TfPooAs.Souls2D.utils.AnimationUtils;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -18,6 +19,8 @@ public class Enemy extends Entity {
     private Body body;
     private World world;
     private Player player; // referencia al jugador para detectarlo
+    private boolean dead;
+    protected GameScreen gameScreen;
 
     // Textura 1x1 para dibujar barras con SpriteBatch (compartida)
     private static Texture whiteTex;
@@ -26,6 +29,10 @@ public class Enemy extends Entity {
     private int maxHealth = 70;
     private int currentHealth = 70;
     private boolean isDead = false;
+
+    // === Almas ===
+    private int soulValue = 20;
+
 
     // === Físicas similares al jugador ===
     private boolean isGrounded = true;
@@ -74,6 +81,9 @@ public class Enemy extends Entity {
         this.world = world;
         this.player = player;
         this.attackTexture = new Texture("enemy-attack.png");
+        this.gameScreen = gameScreen;
+        this.soulValue = soulValue;
+
 
         // === Animaciones ===
 
@@ -146,6 +156,10 @@ public class Enemy extends Entity {
 
         body.createFixture(fdef).setUserData("enemy");
         shape.dispose();
+    }
+
+    public int getSoulValue() {
+        return soulValue;
     }
 
 
@@ -325,6 +339,7 @@ public class Enemy extends Entity {
             currentHealth = 0;
             isDead = true;
             setActive(false); // desactivar la entidad
+            onDeath();
             System.out.println("¡Enemigo eliminado!");
         } else {
             System.out.println("Enemigo recibió " + damage + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -401,6 +416,21 @@ public class Enemy extends Entity {
     public boolean isAttacking() { return isAttacking; }
     public boolean isPlayerDetected() { return playerDetected; }
     public Body getBody() { return body; }
+
+    protected void onDeath() {}
+
+    public float getX() {
+        return position.x;
+    }
+
+    public float getY() {
+        return position.y;
+    }
+
+    public Vector2 getPosition() {
+        return position;
+    }
+
 
     @Override
     public void dispose() {

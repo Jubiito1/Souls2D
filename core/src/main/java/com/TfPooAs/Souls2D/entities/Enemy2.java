@@ -1,5 +1,6 @@
 package com.TfPooAs.Souls2D.entities;
 
+import com.TfPooAs.Souls2D.screens.GameScreen;
 import com.TfPooAs.Souls2D.utils.AnimationUtils;
 import com.TfPooAs.Souls2D.utils.Constants;
 import com.TfPooAs.Souls2D.systems.SoundManager;
@@ -59,11 +60,22 @@ public class Enemy2 extends Entity {
 
     private boolean isAttacking = false;
 
+    // almas
+    private boolean dead;
+    private GameScreen gameScreen;
+
+    private int soulValue = 15;
+
+
     public Enemy2(World world, float x, float y, Player player, List<EnemyProjectile> projectileSink) {
         super(x, y, "enemy2-walk.png"); // como fallback para tamaño; luego usamos anims
         this.world = world;
         this.player = player;
         this.projectileSink = projectileSink;
+
+        this.gameScreen = gameScreen;
+        this.soulValue = soulValue;
+
 
         // Animaciones
         AnimationUtils.AnimWithTexture idlePair = AnimationUtils.createFromSpritesheetIfExists(
@@ -119,6 +131,11 @@ public class Enemy2 extends Entity {
         body.createFixture(fdef).setUserData("enemy");
         shape.dispose();
     }
+
+    public int getSoulValue() {
+        return soulValue;
+    }
+
 
     @Override
     public void update(float delta) {
@@ -283,6 +300,7 @@ public class Enemy2 extends Entity {
             currentHealth = 0;
             isDead = true;
             setActive(false);
+            onDeath();
             System.out.println("¡Enemigo a distancia eliminado!");
         } else {
             System.out.println("Enemigo a distancia recibió " + amount + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -292,6 +310,22 @@ public class Enemy2 extends Entity {
 
     public boolean isDead() { return isDead; }
     public Body getBody() { return body; }
+
+
+    protected void onDeath() {}
+
+    public float getX() {
+        return position.x;
+    }
+
+    public float getY() {
+        return position.y;
+    }
+
+    public Vector2 getPosition() {
+        return position;
+    }
+
 
     @Override
     public void dispose() {

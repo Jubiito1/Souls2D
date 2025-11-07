@@ -57,6 +57,10 @@ public class IudexGundyr extends Enemy {
     private float ATTACK_COOLDOWN = 3.5f;
     private float ATTACK_COOLDOWN_JITTER = 0.8f;
 
+    // === Almas ===
+    private int soulValue = 50;
+
+
     // === Estados del Boss ===
     private enum BossState {
         IDLE, CHASE,
@@ -102,6 +106,9 @@ public class IudexGundyr extends Enemy {
         super(world, x, y, player);
         this.playerRef = player;
         this.body = getBody();
+        this.gameScreen = gameScreen;
+        this.soulValue = soulValue;
+
 
         loadBossAnimations();
         initializeBossStats();
@@ -217,6 +224,12 @@ public class IudexGundyr extends Enemy {
 
         Gdx.app.log("IudexGundyr", "Boss inicializado con " + MAX_HP + " HP");
     }
+
+    public int getSoulValue() {
+        return soulValue;
+    }
+
+
 
     @Override
     public void update(float delta) {
@@ -428,6 +441,7 @@ public class IudexGundyr extends Enemy {
         if (hp <= 0) {
             currentState = BossState.DEAD;
             setActive(false);
+            onDeath();
             Gdx.app.log("IudexGundyr", "¡Boss derrotado!");
         } else {
             Gdx.app.log("IudexGundyr", "Boss recibió " + damage + " daño. HP: " + hp + "/" + MAX_HP);
@@ -532,6 +546,18 @@ public class IudexGundyr extends Enemy {
 
     public void setAttack2Damage(int damage) {
         this.ATTACK2_DAMAGE = damage;
+    }
+
+    public float getX() {
+        return position.x;
+    }
+
+    public float getY() {
+        return position.y;
+    }
+
+    public Vector2 getPosition() {
+        return position;
     }
 
     @Override
