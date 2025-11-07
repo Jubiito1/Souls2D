@@ -87,7 +87,9 @@ public class MainMenuScreen implements Screen {
         // === Listeners ===
         newGame.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                game.gsm.showGameScreen();
+                // Nueva partida: limpiar último guardado de hoguera y empezar desde el spawn por defecto
+                SaveSystem.clear();
+                game.gsm.showGameScreen(false);
             }
         });
 

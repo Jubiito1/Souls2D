@@ -110,7 +110,8 @@ public class DeathOverlay {
         // Listeners
         retry.addListener(new ChangeListener() {
             @Override public void changed(ChangeEvent event, Actor actor) {
-                game.gsm.showGameScreen();
+                // Reiniciar desde la última hoguera (si existe guardado)
+                game.gsm.showGameScreen(true);
             }
         });
 

@@ -17,22 +17,15 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.TfPooAs.Souls2D.systems.SoundManager;
 
-/**
- * Boss Iudex Gundyr - Boss final del juego
- * - Hitbox más grande apropiada para boss
- * - Animaciones de walk corregidas
- * - Sistema de IA complejo con múltiples ataques
- * - Escala visual ajustable
- * - Barra de vida propia de boss
- */
+
 public class IudexGundyr extends Enemy {
 
     // === Configuración del Boss ===
-    private int MAX_HP = 600;
+    private int MAX_HP = 400;
     private int hp = MAX_HP;
 
     // Escala visual del boss (más grande que enemigos normales)
-    private float SCALE = 1f; // Aumentado un poco más
+    private float SCALE = 1.1f;
 
     // Rangos de ataque (aumentados por hitbox más grande)
     private float ATTACK1_RANGE = 80f; // Aumentado
