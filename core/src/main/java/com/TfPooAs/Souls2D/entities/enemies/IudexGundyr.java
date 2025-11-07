@@ -1,4 +1,3 @@
-
 package com.TfPooAs.Souls2D.entities.enemies;
 
 import com.TfPooAs.Souls2D.entities.Enemy;
@@ -16,7 +15,6 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.TfPooAs.Souls2D.systems.SoundManager;
-
 
 public class IudexGundyr extends Enemy {
 
@@ -90,6 +88,10 @@ public class IudexGundyr extends Enemy {
     // === Control mejorado de animación de walk ===
     private float walkAnimTimer = 0f; // Timer separado para walk
     private boolean isWalking = false; // Estado de caminar
+
+    // NUEVO: Control de sonidos (para evitar repetir sonidos)
+    private boolean attack1SoundPlayed = false;
+    private boolean attack2SoundPlayed = false;
 
     public IudexGundyr(World world, float x, float y, Player player) {
         super(world, x, y, player);
@@ -236,7 +238,6 @@ public class IudexGundyr extends Enemy {
         if (isWalking) {
             walkAnimTimer += delta;
         }
-
     }
 
     private void updateBossAI(float delta, float distanceToPlayer) {
@@ -280,6 +281,16 @@ public class IudexGundyr extends Enemy {
 
             case ATTACK1_WINDUP:
                 isWalking = false;
+                // NUEVO: Reproducir sonido de ataque 1 al inicio del windup
+                if (!attack1SoundPlayed && stateTimer >= 0.1f) { // Pequeño delay para sincronizar mejor
+                    try {
+                        SoundManager.playSfx("Gundyr_slash.wav");
+                        attack1SoundPlayed = true;
+                        Gdx.app.log("IudexGundyr", "Reproduciendo sonido Gundyr_slash.wav");
+                    } catch (Exception e) {
+                        Gdx.app.error("IudexGundyr", "No se pudo reproducir Gundyr_slash.wav: " + e.getMessage());
+                    }
+                }
                 if (stateTimer >= ATTACK1_WINDUP) {
                     changeState(BossState.ATTACK1_ACTIVE);
                     executeAttack1();
@@ -308,6 +319,16 @@ public class IudexGundyr extends Enemy {
 
             case ATTACK2_WINDUP:
                 isWalking = false;
+                // NUEVO: Reproducir sonido de ataque 2 al inicio del windup
+                if (!attack2SoundPlayed && stateTimer >= 0.1f) { // Pequeño delay para sincronizar mejor
+                    try {
+                        SoundManager.playSfx("Gundyr_stab.wav");
+                        attack2SoundPlayed = true;
+                        Gdx.app.log("IudexGundyr", "Reproduciendo sonido Gundyr_stab.wav");
+                    } catch (Exception e) {
+                        Gdx.app.error("IudexGundyr", "No se pudo reproducir Gundyr_stab.wav: " + e.getMessage());
+                    }
+                }
                 if (stateTimer >= ATTACK2_WINDUP) {
                     changeState(BossState.ATTACK2_ACTIVE);
                 }
@@ -339,6 +360,14 @@ public class IudexGundyr extends Enemy {
         stateTimer = 0f;
         hitApplied = false;
 
+        // NUEVO: Resetear flags de sonidos cuando cambia de estado
+        if (newState != BossState.ATTACK1_WINDUP && newState != BossState.ATTACK1_ACTIVE && newState != BossState.ATTACK1_RECOVERY) {
+            attack1SoundPlayed = false;
+        }
+        if (newState != BossState.ATTACK2_WINDUP && newState != BossState.ATTACK2_ACTIVE && newState != BossState.ATTACK2_RECOVERY) {
+            attack2SoundPlayed = false;
+        }
+
         // Log para debug
         Gdx.app.log("IudexGundyr", "Estado cambiado a: " + newState.name());
     }
@@ -354,12 +383,7 @@ public class IudexGundyr extends Enemy {
         float direction = facingRight ? 1f : -1f;
         body.setLinearVelocity(direction * ATTACK1_DASH_SPEED, body.getLinearVelocity().y);
 
-        // Sonido de ataque
-        try {
-            SoundManager.playSfx("assets/boss_attack1.wav");
-        } catch (Exception e) {
-            // Ignorar si no hay archivo de sonido
-        }
+        // NOTA: El sonido ahora se reproduce en ATTACK1_WINDUP, no aquí
     }
 
     private void stopDash() {
@@ -393,8 +417,6 @@ public class IudexGundyr extends Enemy {
             Gdx.app.log("IudexGundyr", "¡Golpeó al jugador (" + damage + " daño) desde " + (facingRight ? "derecha" : "izquierda") + "!");
         }
     }
-
-
 
     private float getDistanceToPlayer() {
         return Vector2.dst(
@@ -453,9 +475,6 @@ public class IudexGundyr extends Enemy {
                 batch.draw(texture, position.x, position.y, width, height);
             }
         }
-
-
-
     }
 
     private TextureRegion getCurrentAnimationFrame() {
@@ -485,9 +504,6 @@ public class IudexGundyr extends Enemy {
                 return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
         }
     }
-
-
-
 
     // === Getters ===
     @Override

@@ -2,7 +2,7 @@ package com.TfPooAs.Souls2D.entities;
 
 public class estus {
     private int charges = 3; // cargas por run
-    private int healAmount = 35; // cantidad a curar por uso
+    private int healAmount = 45; // cantidad a curar por uso
 
     public estus() {}
 
