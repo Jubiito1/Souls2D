@@ -19,6 +19,9 @@ public class Player extends Entity {
     private Body body;
     private World world;
 
+    // Moneda/contador de progreso: almas del jugador
+    private int souls = 0;
+
     private float moveSpeed = 0.01f;
     private float jumpForce = 1f;
     private float maxHorizontalSpeed = 1.7f; // velocidad máxima horizontal (en unidades Box2D)
@@ -763,6 +766,11 @@ public class Player extends Entity {
     // Stamina getters
     public int getCurrentStamina() { return Math.round(currentStamina); }
     public int getMaxStamina() { return Math.round(maxStamina); }
+
+    // === Almas ===
+    public int getSouls() { return souls; }
+    public void setSouls(int amount) { this.souls = Math.max(0, amount); }
+    public void addSouls(int amount) { if (amount > 0) this.souls += amount; }
 
     public void setGrounded(boolean grounded) {
         boolean wasGroundedBefore = this.isGrounded;

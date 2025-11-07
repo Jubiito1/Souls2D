@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -31,6 +32,8 @@ public class Enemy2 extends Entity {
     private int maxHealth = 30;
     private int currentHealth = 30;
     private boolean isDead = false;
+    // Recompensas
+    private boolean soulsGranted = false;
 
     // Estados
     private boolean isGrounded = true;
@@ -309,6 +312,12 @@ public class Enemy2 extends Entity {
         currentHealth -= amount;
         if (currentHealth <= 0) {
             currentHealth = 0;
+            // Otorgar almas al jugador (una sola vez)
+            if (!soulsGranted && player != null) {
+                int reward = MathUtils.random(10, 15);
+                player.addSouls(reward);
+                soulsGranted = true;
+            }
             if (deathAnim != null) {
                 isDying = true;
                 deathTimer = 0f;

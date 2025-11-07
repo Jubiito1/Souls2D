@@ -41,6 +41,10 @@ public class HUD {
     private static final float ALTO_BARRA_BOSS = 28f;
     private static final float MARGEN_INFERIOR_BOSS = 40f;
 
+    // Escalas de texto
+    private static final float SCALE_BOSS_NAME = 1.4f;
+    private static final float SCALE_SOULS = 1.3f;
+
     // NUEVO: Control de música del boss
     private boolean bossMusicStarted = false;
 
@@ -196,12 +200,31 @@ public class HUD {
         // Texto del Boss centrado sobre la barra (si visible)
         if (bossVisible) {
             String bossName = "Iudex Gundyr";
+            // Aumentar escala para el nombre del jefe
+            font.getData().setScale(SCALE_BOSS_NAME);
             layout.setText(font, bossName);
             float textX = (uiCamera.viewportWidth - layout.width) / 2f;
-            float textY = MARGEN_INFERIOR_BOSS + ALTO_BARRA_BOSS + 22f;
+            float textY = MARGEN_INFERIOR_BOSS + ALTO_BARRA_BOSS + 26f; // un poco más de margen por el tamaño
             font.setColor(Color.WHITE);
             font.draw(uiBatch, bossName, textX, textY);
+            // Restaurar escala por defecto
+            font.getData().setScale(1f);
         }
+
+        // === Contador de Almas (arriba-derecha) ===
+        try {
+            int souls = player.getSouls();
+            String soulsText = "Almas: " + souls;
+            // Aumentar escala para las almas
+            font.getData().setScale(SCALE_SOULS);
+            layout.setText(font, soulsText);
+            float soulsX = uiCamera.viewportWidth - MARGEN - layout.width;
+            float soulsY = uiCamera.viewportHeight - MARGEN; // alineado con barra de vida
+            font.setColor(Color.WHITE);
+            font.draw(uiBatch, soulsText, soulsX, soulsY);
+            // Restaurar escala por defecto
+            font.getData().setScale(1f);
+        } catch (Exception ignored) { }
 
         uiBatch.end();
         // Reset de color para no afectar a otros renders
