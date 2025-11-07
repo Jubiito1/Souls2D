@@ -580,5 +580,6 @@ public class IudexGundyr extends Enemy {
         if (walkTexture != null) walkTexture.dispose();
         if (attack1Texture != null) attack1Texture.dispose();
         if (attack2Texture != null) attack2Texture.dispose();
+        if (deathTexture != null) deathTexture.dispose();
     }
 }
