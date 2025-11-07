@@ -1,6 +1,7 @@
 .gitkeep
 Gundyr_slash.wav
 Gundyr_stab.wav
+Iudex-Death-Sheet.png
 arrow_shoot.wav
 backgrounds/fondo.png
 backgrounds/fondo2.png
@@ -14,7 +15,9 @@ death.wav
 enemy-attack.png
 enemy-idle.png
 enemy-walk.png
+enemy1-death-Sheet.png
 enemy2-attack.png
+enemy2-death.png
 enemy2-walk.png
 enemy_slash.wav
 estus.png

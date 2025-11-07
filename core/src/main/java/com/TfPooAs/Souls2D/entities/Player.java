@@ -535,7 +535,7 @@ public class Player extends Entity {
         body.setLinearVelocity(dir * attackLungeSpeed, vel.y);
 
         // SFX: slash del jugador
-        SoundManager.playSfx("assets/slash_player.wav");
+        SoundManager.playSfx("slash_player.wav");
 
         System.out.println("¡Atacando!");
     }
@@ -706,7 +706,7 @@ public class Player extends Entity {
         if (damage <= 0) return;
         currentHealth -= damage;
         // SFX hurt cuando la vida disminuye
-        try { SoundManager.playSfx("assets/hurt.wav"); } catch (Exception ignored) { }
+        try { SoundManager.playSfx("hurt.wav"); } catch (Exception ignored) { }
         if (currentHealth <= 0) {
             currentHealth = 0;
             isDead = true;
@@ -732,7 +732,7 @@ public class Player extends Entity {
         if (damage <= 0) return;
         currentHealth -= damage;
         // SFX hurt también por daño de caída
-        try { SoundManager.playSfx("assets/hurt.wav"); } catch (Exception ignored) { }
+        try { SoundManager.playSfx("hurt.wav"); } catch (Exception ignored) { }
         if (currentHealth <= 0) {
             currentHealth = 0;
             isDead = true;

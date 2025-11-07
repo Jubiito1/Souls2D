@@ -73,12 +73,18 @@ public class IudexGundyr extends Enemy {
     private Animation<TextureRegion> bossWalkAnim;
     private Animation<TextureRegion> bossAttack1Anim;
     private Animation<TextureRegion> bossAttack2Anim;
+    private Animation<TextureRegion> bossDeathAnim;
 
     // Texturas para disposar
     private Texture idleTexture;
     private Texture walkTexture;
     private Texture attack1Texture;
     private Texture attack2Texture;
+    private Texture deathTexture;
+
+    // Muerte
+    private float deathTimer = 0f;
+    private boolean deathAnimStarted = false;
 
     // Control de cooldowns
     private float nextAttack1Time = 0f;
@@ -144,6 +150,18 @@ public class IudexGundyr extends Enemy {
             Gdx.app.log("IudexGundyr", "Animación ATAQUE 2 cargada correctamente");
         } else {
             Gdx.app.error("IudexGundyr", "No se pudo cargar animación ATAQUE 2");
+        }
+
+        // === ANIMACIÓN DE MUERTE ===
+        int[] deathCols = new int[] {12,11,10,9,8,7,6,5,4,3,2};
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
+            "Iudex-Death-Sheet.png", deathCols, 0.10f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.bossDeathAnim = deathPair.animation;
+            this.deathTexture = deathPair.texture;
+            Gdx.app.log("IudexGundyr", "Animación DEATH cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación DEATH");
         }
 
         // Determinar tamaño visual
@@ -213,7 +231,17 @@ public class IudexGundyr extends Enemy {
 
     @Override
     public void update(float delta) {
-        if (currentState == BossState.DEAD) return;
+        if (currentState == BossState.DEAD) {
+            // avanzar anim de muerte si existe
+            if (!deathAnimStarted) {
+                deathAnimStarted = true;
+                deathTimer = 0f;
+                try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) {}
+            } else {
+                deathTimer += delta;
+            }
+            return;
+        }
 
         stateTimer += delta;
         totalTime += delta;
@@ -356,7 +384,7 @@ public class IudexGundyr extends Enemy {
 
         // Sonido de ataque
         try {
-            SoundManager.playSfx("assets/boss_attack1.wav");
+            SoundManager.playSfx("Gundyr_slash.wav");
         } catch (Exception e) {
             // Ignorar si no hay archivo de sonido
         }

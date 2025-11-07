@@ -60,6 +60,12 @@ public class Enemy extends Entity {
     private Texture walkSheetTexture;
     private Texture attackSheetTexture;
 
+    // Animación de muerte
+    private Animation<TextureRegion> deathAnim;
+    private Texture deathSheetTexture;
+    private boolean isDying = false;
+    private float deathTimer = 0f;
+
     // Timers de animación
     private float stateTime = 0f;      // para idle/caminar
     // attackTimer ya existe arriba y se usa para el ataque
@@ -96,6 +102,15 @@ public class Enemy extends Entity {
         if (walkPair != null) {
             this.walkAnim = walkPair.animation;
             this.walkSheetTexture = walkPair.texture;
+        }
+
+        // Muerte (columnas auto)
+        int[] deathCols = new int[] {10, 9, 8, 7, 6, 5, 4, 3, 2};
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
+            "enemy1-death-Sheet.png", deathCols, 0.10f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.deathAnim = deathPair.animation;
+            this.deathSheetTexture = deathPair.texture;
         }
 
 
@@ -149,6 +164,17 @@ public class Enemy extends Entity {
 
     @Override
     public void update(float delta) {
+        // Si está muriendo, solo avanzar anim de muerte y esperar fin
+        if (isDying) {
+            deathTimer += delta;
+            // cuando termina la animación, marcar muerto y desactivar
+            if (deathAnim != null && deathAnim.isAnimationFinished(deathTimer)) {
+                isDying = false;
+                isDead = true;
+                setActive(false);
+            }
+            return;
+        }
         if (isDead) return;
 
         // Avanzar timers de animación
@@ -175,6 +201,10 @@ public class Enemy extends Entity {
             if (finishedByAnim || finishedByTime) {
                 endAttack();
             }
+        }
+        // Avanzar anim de muerte si corresponde
+        if (isDying) {
+            deathTimer += delta;
         }
 
         // Actualizar cooldown de ataque
@@ -321,8 +351,16 @@ public class Enemy extends Entity {
         currentHealth -= damage;
         if (currentHealth <= 0) {
             currentHealth = 0;
-            isDead = true;
-            setActive(false); // desactivar la entidad
+            // Iniciar animación de muerte si existe
+            if (deathAnim != null) {
+                isDying = true;
+                deathTimer = 0f;
+                // reproducir sonido de muerte si existe
+                try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) {}
+            } else {
+                isDead = true;
+                setActive(false);
+            }
             System.out.println("¡Enemigo eliminado!");
         } else {
             System.out.println("Enemigo recibió " + damage + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -331,11 +369,14 @@ public class Enemy extends Entity {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || isDead) return;
+        if (!active && !isDying) return; // permitir render mientras muere
+        if (isDead) return;
 
         TextureRegion currentFrame;
 
-        if (isAttacking && attackAnim != null) {
+        if (isDying && deathAnim != null) {
+            currentFrame = deathAnim.getKeyFrame(deathTimer);
+        } else if (isAttacking && attackAnim != null) {
             currentFrame = attackAnim.getKeyFrame(attackTimer);
         } else if (playerDetected && walkAnim != null) {
             currentFrame = walkAnim.getKeyFrame(stateTime);
@@ -349,6 +390,9 @@ public class Enemy extends Entity {
             batch.draw(currentFrame, position.x, position.y, width, height);
         else
             batch.draw(currentFrame, position.x + width, position.y, -width, height);
+
+        // No dibujar barra de vida durante animación de muerte
+        if (isDying) return;
 
         // === Barra de vida encima del enemigo ===
         // Lazy-init de textura blanca 1x1 para rectángulos
@@ -411,6 +455,9 @@ public class Enemy extends Entity {
         }
         if (walkSheetTexture != null) {
             walkSheetTexture.dispose();
+        }
+        if (deathSheetTexture != null) {
+            deathSheetTexture.dispose();
         }
     }
 }
