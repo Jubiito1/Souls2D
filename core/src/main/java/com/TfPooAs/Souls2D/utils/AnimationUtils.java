@@ -34,6 +34,39 @@ public class AnimationUtils {
         return new AnimWithTexture(anim, sheet);
     }
 
+    /**
+     * Tries to create an animation from a horizontal spritesheet where rows==1 and columns are unknown.
+     * It tests a list of candidate columns and picks the first that evenly divides the sheet width.
+     * Returns null if file doesn't exist. If no candidate fits, returns a single-frame animation.
+     */
+    public static AnimWithTexture createFromHorizontalSheetAutoCols(String internalPath, int[] candidateCols, float frameDuration, Animation.PlayMode playMode) {
+        FileHandle fh = Gdx.files.internal(internalPath);
+        if (fh == null || !fh.exists()) return null;
+        Texture sheet = new Texture(fh);
+        int sheetW = sheet.getWidth();
+        int colsFound = -1;
+        for (int cols : candidateCols) {
+            if (cols > 0 && sheetW % cols == 0) {
+                colsFound = cols;
+                break;
+            }
+        }
+        Animation<TextureRegion> anim;
+        if (colsFound > 0) {
+            TextureRegion[][] tmp = TextureRegion.split(sheet, sheetW / colsFound, sheet.getHeight());
+            TextureRegion[] frames = new TextureRegion[colsFound];
+            for (int c = 0; c < colsFound; c++) {
+                frames[c] = tmp[0][c];
+            }
+            anim = new Animation<>(frameDuration, frames);
+        } else {
+            // fall back to single frame
+            anim = new Animation<>(frameDuration, new TextureRegion(sheet));
+        }
+        anim.setPlayMode(playMode);
+        return new AnimWithTexture(anim, sheet);
+    }
+
     public static Animation<TextureRegion> createSingleFrame(Texture texture, float frameDuration, Animation.PlayMode playMode) {
         TextureRegion region = new TextureRegion(texture);
         Animation<TextureRegion> anim = new Animation<>(frameDuration, region);

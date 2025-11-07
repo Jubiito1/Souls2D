@@ -38,7 +38,7 @@ public class SoundManager {
     /**
      * Plays a background music by path. If the same path is already playing, it just ensures looping/volume.
      * Path is resolved with Gdx.files.internal(). Use the same convention as the rest of the project
-     * (e.g., "assets/musica.wav").
+     * (e.g., "musica.wav").
      */
     public static void playBackground(String internalPath, boolean loop) {
         try {

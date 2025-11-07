@@ -1,3 +1,4 @@
+
 package com.TfPooAs.Souls2D.entities.enemies;
 
 import com.TfPooAs.Souls2D.entities.Enemy;
@@ -15,6 +16,7 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.TfPooAs.Souls2D.systems.SoundManager;
+
 
 public class IudexGundyr extends Enemy {
 
@@ -71,12 +73,18 @@ public class IudexGundyr extends Enemy {
     private Animation<TextureRegion> bossWalkAnim;
     private Animation<TextureRegion> bossAttack1Anim;
     private Animation<TextureRegion> bossAttack2Anim;
+    private Animation<TextureRegion> bossDeathAnim;
 
     // Texturas para disposar
     private Texture idleTexture;
     private Texture walkTexture;
     private Texture attack1Texture;
     private Texture attack2Texture;
+    private Texture deathTexture;
+
+    // Muerte
+    private float deathTimer = 0f;
+    private boolean deathAnimStarted = false;
 
     // Control de cooldowns
     private float nextAttack1Time = 0f;
@@ -88,10 +96,6 @@ public class IudexGundyr extends Enemy {
     // === Control mejorado de animación de walk ===
     private float walkAnimTimer = 0f; // Timer separado para walk
     private boolean isWalking = false; // Estado de caminar
-
-    // NUEVO: Control de sonidos (para evitar repetir sonidos)
-    private boolean attack1SoundPlayed = false;
-    private boolean attack2SoundPlayed = false;
 
     public IudexGundyr(World world, float x, float y, Player player) {
         super(world, x, y, player);
@@ -146,6 +150,18 @@ public class IudexGundyr extends Enemy {
             Gdx.app.log("IudexGundyr", "Animación ATAQUE 2 cargada correctamente");
         } else {
             Gdx.app.error("IudexGundyr", "No se pudo cargar animación ATAQUE 2");
+        }
+
+        // === ANIMACIÓN DE MUERTE ===
+        int[] deathCols = new int[] {12,11,10,9,8,7,6,5,4,3,2};
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
+            "Iudex-Death-Sheet.png", deathCols, 0.10f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.bossDeathAnim = deathPair.animation;
+            this.deathTexture = deathPair.texture;
+            Gdx.app.log("IudexGundyr", "Animación DEATH cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación DEATH");
         }
 
         // Determinar tamaño visual
@@ -215,7 +231,21 @@ public class IudexGundyr extends Enemy {
 
     @Override
     public void update(float delta) {
-        if (currentState == BossState.DEAD) return;
+        if (currentState == BossState.DEAD) {
+            // Avanzar anim de muerte y finalizar cuando termine
+            if (!deathAnimStarted) {
+                deathAnimStarted = true;
+                deathTimer = 0f;
+                try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) {}
+            } else {
+                deathTimer += delta;
+            }
+            // Si hay animación de muerte, esperar a que termine para desactivar
+            if (bossDeathAnim != null && bossDeathAnim.isAnimationFinished(deathTimer)) {
+                setActive(false);
+            }
+            return;
+        }
 
         stateTimer += delta;
         totalTime += delta;
@@ -238,6 +268,7 @@ public class IudexGundyr extends Enemy {
         if (isWalking) {
             walkAnimTimer += delta;
         }
+
     }
 
     private void updateBossAI(float delta, float distanceToPlayer) {
@@ -281,16 +312,6 @@ public class IudexGundyr extends Enemy {
 
             case ATTACK1_WINDUP:
                 isWalking = false;
-                // NUEVO: Reproducir sonido de ataque 1 al inicio del windup
-                if (!attack1SoundPlayed && stateTimer >= 0.1f) { // Pequeño delay para sincronizar mejor
-                    try {
-                        SoundManager.playSfx("Gundyr_slash.wav");
-                        attack1SoundPlayed = true;
-                        Gdx.app.log("IudexGundyr", "Reproduciendo sonido Gundyr_slash.wav");
-                    } catch (Exception e) {
-                        Gdx.app.error("IudexGundyr", "No se pudo reproducir Gundyr_slash.wav: " + e.getMessage());
-                    }
-                }
                 if (stateTimer >= ATTACK1_WINDUP) {
                     changeState(BossState.ATTACK1_ACTIVE);
                     executeAttack1();
@@ -319,16 +340,6 @@ public class IudexGundyr extends Enemy {
 
             case ATTACK2_WINDUP:
                 isWalking = false;
-                // NUEVO: Reproducir sonido de ataque 2 al inicio del windup
-                if (!attack2SoundPlayed && stateTimer >= 0.1f) { // Pequeño delay para sincronizar mejor
-                    try {
-                        SoundManager.playSfx("Gundyr_stab.wav");
-                        attack2SoundPlayed = true;
-                        Gdx.app.log("IudexGundyr", "Reproduciendo sonido Gundyr_stab.wav");
-                    } catch (Exception e) {
-                        Gdx.app.error("IudexGundyr", "No se pudo reproducir Gundyr_stab.wav: " + e.getMessage());
-                    }
-                }
                 if (stateTimer >= ATTACK2_WINDUP) {
                     changeState(BossState.ATTACK2_ACTIVE);
                 }
@@ -360,14 +371,6 @@ public class IudexGundyr extends Enemy {
         stateTimer = 0f;
         hitApplied = false;
 
-        // NUEVO: Resetear flags de sonidos cuando cambia de estado
-        if (newState != BossState.ATTACK1_WINDUP && newState != BossState.ATTACK1_ACTIVE && newState != BossState.ATTACK1_RECOVERY) {
-            attack1SoundPlayed = false;
-        }
-        if (newState != BossState.ATTACK2_WINDUP && newState != BossState.ATTACK2_ACTIVE && newState != BossState.ATTACK2_RECOVERY) {
-            attack2SoundPlayed = false;
-        }
-
         // Log para debug
         Gdx.app.log("IudexGundyr", "Estado cambiado a: " + newState.name());
     }
@@ -383,7 +386,12 @@ public class IudexGundyr extends Enemy {
         float direction = facingRight ? 1f : -1f;
         body.setLinearVelocity(direction * ATTACK1_DASH_SPEED, body.getLinearVelocity().y);
 
-        // NOTA: El sonido ahora se reproduce en ATTACK1_WINDUP, no aquí
+        // Sonido de ataque
+        try {
+            SoundManager.playSfx("Gundyr_slash.wav");
+        } catch (Exception e) {
+            // Ignorar si no hay archivo de sonido
+        }
     }
 
     private void stopDash() {
@@ -418,6 +426,8 @@ public class IudexGundyr extends Enemy {
         }
     }
 
+
+
     private float getDistanceToPlayer() {
         return Vector2.dst(
             position.x + width / 2f, position.y + height / 2f,
@@ -451,7 +461,23 @@ public class IudexGundyr extends Enemy {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || currentState == BossState.DEAD) return;
+        // Si está en estado de muerte, dibujar animación de muerte si existe
+        if (currentState == BossState.DEAD) {
+            if (bossDeathAnim != null) {
+                TextureRegion deathFrame = bossDeathAnim.getKeyFrame(deathTimer, false);
+                if (deathFrame != null) {
+                    float drawWidth = deathFrame.getRegionWidth() * SCALE;
+                    float drawHeight = deathFrame.getRegionHeight() * SCALE;
+                    if (facingRight) {
+                        batch.draw(deathFrame, position.x + drawWidth, position.y, -drawWidth, drawHeight);
+                    } else {
+                        batch.draw(deathFrame, position.x, position.y, drawWidth, drawHeight);
+                    }
+                }
+            }
+            return;
+        }
+        if (!active) return;
 
         // Seleccionar animación apropiada - CORREGIDO
         TextureRegion currentFrame = getCurrentAnimationFrame();
@@ -504,6 +530,9 @@ public class IudexGundyr extends Enemy {
                 return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
         }
     }
+
+
+
 
     // === Getters ===
     @Override

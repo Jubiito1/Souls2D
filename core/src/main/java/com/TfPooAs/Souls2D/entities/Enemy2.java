@@ -54,6 +54,12 @@ public class Enemy2 extends Entity {
     private Animation<TextureRegion> attackAnim;
     private Texture walkSheetTexture;
     private Texture attackSheetTexture;
+    // Muerte
+    private Animation<TextureRegion> deathAnim;
+    private Texture deathSheetTexture;
+    private boolean isDying = false;
+    private float deathTimer = 0f;
+
     private float stateTime = 0f;
     private float attackTimer = 0f;
 
@@ -83,6 +89,14 @@ public class Enemy2 extends Entity {
         if (attackPair != null) {
             this.attackAnim = attackPair.animation;
             this.attackSheetTexture = attackPair.texture;
+        }
+        // Muerte
+        int[] deathCols = new int[] {10,9,8,7,6,5,4,3,2};
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
+            "enemy2-death.png", deathCols, 0.10f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.deathAnim = deathPair.animation;
+            this.deathSheetTexture = deathPair.texture;
         }
 
         // Determinar tamaño visual a partir de alguna anim
@@ -122,6 +136,16 @@ public class Enemy2 extends Entity {
 
     @Override
     public void update(float delta) {
+        // Manejar animación de muerte
+        if (isDying) {
+            deathTimer += delta;
+            if (deathAnim != null && deathAnim.isAnimationFinished(deathTimer)) {
+                isDying = false;
+                isDead = true;
+                setActive(false);
+            }
+            return;
+        }
         if (isDead) return;
 
         stateTime += delta;
@@ -184,7 +208,7 @@ public class Enemy2 extends Entity {
         attackTimer = 0f;
         shootCooldownTimer = SHOOT_COOLDOWN;
         // SFX: disparo de flecha
-        try { SoundManager.playSfx("assets/arrow_shoot.wav"); } catch (Exception ignored) { }
+        try { SoundManager.playSfx("arrow_shoot.wav"); } catch (Exception ignored) { }
 
         // CALCULAR DIRECCIÓN HACIA EL JUGADOR (en lugar de solo horizontal)
         float enemyCenterX = position.x + width / 2f;
@@ -229,15 +253,19 @@ public class Enemy2 extends Entity {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || isDead) return;
+        if (!active && !isDying) return;
+        if (isDead) return;
 
         TextureRegion frame;
-        if (isAttacking && attackAnim != null) frame = attackAnim.getKeyFrame(attackTimer);
+        if (isDying && deathAnim != null) frame = deathAnim.getKeyFrame(deathTimer);
+        else if (isAttacking && attackAnim != null) frame = attackAnim.getKeyFrame(attackTimer);
         else if (walkAnim != null) frame = walkAnim.getKeyFrame(stateTime);
         else frame = new TextureRegion(texture);
 
         if (!facingRight) batch.draw(frame, position.x, position.y, width, height);
         else batch.draw(frame, position.x + width, position.y, -width, height);
+
+        if (isDying) return; // no barra de vida mientras muere
 
         // === Barra de vida encima del enemigo ===
         // Lazy-init de textura blanca 1x1 para rectángulos
@@ -281,8 +309,14 @@ public class Enemy2 extends Entity {
         currentHealth -= amount;
         if (currentHealth <= 0) {
             currentHealth = 0;
-            isDead = true;
-            setActive(false);
+            if (deathAnim != null) {
+                isDying = true;
+                deathTimer = 0f;
+                try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) {}
+            } else {
+                isDead = true;
+                setActive(false);
+            }
             System.out.println("¡Enemigo a distancia eliminado!");
         } else {
             System.out.println("Enemigo a distancia recibió " + amount + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -296,7 +330,9 @@ public class Enemy2 extends Entity {
     @Override
     public void dispose() {
         super.dispose();
+        if (idleSheetTexture != null) idleSheetTexture.dispose();
         if (walkSheetTexture != null) walkSheetTexture.dispose();
         if (attackSheetTexture != null) attackSheetTexture.dispose();
+        if (deathSheetTexture != null) deathSheetTexture.dispose();
     }
 }
