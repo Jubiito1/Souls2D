@@ -53,6 +53,8 @@ public class Enemy2 extends Entity {
     private Texture idleSheetTexture;
     private Animation<TextureRegion> walkAnim;
     private Animation<TextureRegion> attackAnim;
+    private Animation<TextureRegion> deathAnim;
+    private Texture deathSheetTexture;
     private Texture walkSheetTexture;
     private Texture attackSheetTexture;
     private float stateTime = 0f;
@@ -64,7 +66,8 @@ public class Enemy2 extends Entity {
     private boolean dead;
     private GameScreen gameScreen;
 
-    private int soulValue = 15;
+    private float deathTimer = 0f;
+
 
 
     public Enemy2(World world, float x, float y, Player player, List<EnemyProjectile> projectileSink) {
@@ -73,8 +76,6 @@ public class Enemy2 extends Entity {
         this.player = player;
         this.projectileSink = projectileSink;
 
-        this.gameScreen = gameScreen;
-        this.soulValue = soulValue;
 
 
         // Animaciones
@@ -96,6 +97,14 @@ public class Enemy2 extends Entity {
             this.attackAnim = attackPair.animation;
             this.attackSheetTexture = attackPair.texture;
         }
+        // muerte
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy2-death-.png", 6, 1, 1f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.deathAnim = deathPair.animation;
+            this.deathSheetTexture = deathPair.texture;
+        }
+
 
         // Determinar tamaño visual a partir de alguna anim
         TextureRegion baseFrame = (walkAnim != null)
@@ -132,15 +141,15 @@ public class Enemy2 extends Entity {
         shape.dispose();
     }
 
-    public int getSoulValue() {
-        return soulValue;
-    }
-
 
     @Override
     public void update(float delta) {
-        if (isDead) return;
-
+        if (isDead) {
+            if (deathAnim != null && !deathAnim.isAnimationFinished(deathTimer)) {
+                deathTimer += delta;
+            }
+            return; // No seguir moviéndose ni atacando
+        }
         stateTime += delta;
         if (shootCooldownTimer > 0f) shootCooldownTimer -= delta;
         if (isAttacking) {
@@ -246,10 +255,11 @@ public class Enemy2 extends Entity {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || isDead) return;
+        if (!active && !isDead) return;
 
         TextureRegion frame;
-        if (isAttacking && attackAnim != null) frame = attackAnim.getKeyFrame(attackTimer);
+        if (isDead && deathAnim != null) frame = deathAnim.getKeyFrame(deathTimer);
+        else if (isAttacking && attackAnim != null) frame = attackAnim.getKeyFrame(attackTimer);
         else if (walkAnim != null) frame = walkAnim.getKeyFrame(stateTime);
         else frame = new TextureRegion(texture);
 
@@ -300,7 +310,13 @@ public class Enemy2 extends Entity {
             currentHealth = 0;
             isDead = true;
             setActive(false);
-            onDeath();
+            deathTimer = 0f; // reiniciar animación de muerte
+            body.setLinearVelocity(0, 0);
+            body.setGravityScale(0);
+            if (player != null) {
+                int soulsReward = 10 + (int)(Math.random() * 6);
+                player.addSouls(soulsReward);
+            }
             System.out.println("¡Enemigo a distancia eliminado!");
         } else {
             System.out.println("Enemigo a distancia recibió " + amount + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -312,25 +328,12 @@ public class Enemy2 extends Entity {
     public Body getBody() { return body; }
 
 
-    protected void onDeath() {}
-
-    public float getX() {
-        return position.x;
-    }
-
-    public float getY() {
-        return position.y;
-    }
-
-    public Vector2 getPosition() {
-        return position;
-    }
-
 
     @Override
     public void dispose() {
         super.dispose();
         if (walkSheetTexture != null) walkSheetTexture.dispose();
         if (attackSheetTexture != null) attackSheetTexture.dispose();
+        if (deathSheetTexture != null) deathSheetTexture.dispose();
     }
 }

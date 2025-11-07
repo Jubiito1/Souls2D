@@ -18,7 +18,7 @@ import com.TfPooAs.Souls2D.systems.SoundManager;
 public class Enemy extends Entity {
     private Body body;
     private World world;
-    private Player player; // referencia al jugador para detectarlo
+    public Player player; // referencia al jugador para detectarlo
     private boolean dead;
     protected GameScreen gameScreen;
 
@@ -30,8 +30,6 @@ public class Enemy extends Entity {
     private int currentHealth = 70;
     private boolean isDead = false;
 
-    // === Almas ===
-    private int soulValue = 20;
 
 
     // === Físicas similares al jugador ===
@@ -64,6 +62,8 @@ public class Enemy extends Entity {
     private Animation<TextureRegion> idleAnim;
     private Animation<TextureRegion> attackAnim;
     private Animation<TextureRegion> walkAnim;
+    private Animation<TextureRegion> deathAnim;
+    private Texture deathSheetTexture;
     private Texture idleSheetTexture;
     private Texture walkSheetTexture;
     private Texture attackSheetTexture;
@@ -76,13 +76,14 @@ public class Enemy extends Entity {
     private int attackDirection = 1;   // -1 izquierda, 1 derecha
 
 
+    private float deathTimer = 0f;
+
+
     public Enemy(World world, float x, float y, Player player) {
         super(x, y, "enemy-idle.png");
         this.world = world;
         this.player = player;
         this.attackTexture = new Texture("enemy-attack.png");
-        this.gameScreen = gameScreen;
-        this.soulValue = soulValue;
 
 
         // === Animaciones ===
@@ -109,6 +110,15 @@ public class Enemy extends Entity {
             this.walkAnim = walkPair.animation;
             this.walkSheetTexture = walkPair.texture;
         }
+
+        // muerte
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromSpritesheetIfExists(
+            "enemy1-death-Sheet.png", 6, 1, 0.12f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.deathAnim = deathPair.animation;
+            this.deathSheetTexture = deathPair.texture;
+        }
+
 
 
         // Determinar ancho/alto de frame base (usa idle si existe, si no usa walk)
@@ -158,15 +168,17 @@ public class Enemy extends Entity {
         shape.dispose();
     }
 
-    public int getSoulValue() {
-        return soulValue;
-    }
 
 
     @Override
     public void update(float delta) {
-        if (isDead) return;
 
+        if (isDead) {
+            if (deathAnim != null && !deathAnim.isAnimationFinished(deathTimer)) {
+                deathTimer += delta;
+            }
+            return; // No seguir moviéndose ni atacando
+        }
         // Avanzar timers de animación
         stateTime += delta;
 
@@ -338,8 +350,16 @@ public class Enemy extends Entity {
         if (currentHealth <= 0) {
             currentHealth = 0;
             isDead = true;
-            setActive(false); // desactivar la entidad
-            onDeath();
+            deathTimer = 0f; // reiniciar animación de muerte
+            body.setLinearVelocity(0, 0);
+            body.setGravityScale(0);
+
+            setActive(false);
+            // desactivar la entidad
+            if (player != null) {
+                int soulsReward = 10 + (int)(Math.random() * 6);
+                player.addSouls(soulsReward);
+            }
             System.out.println("¡Enemigo eliminado!");
         } else {
             System.out.println("Enemigo recibió " + damage + " de daño. Vida: " + currentHealth + "/" + maxHealth);
@@ -348,11 +368,13 @@ public class Enemy extends Entity {
 
     @Override
     public void render(SpriteBatch batch) {
-        if (!active || isDead) return;
+        if (!active && !isDead) return;
 
         TextureRegion currentFrame;
 
-        if (isAttacking && attackAnim != null) {
+        if (isDead && deathAnim != null) {
+            currentFrame = deathAnim.getKeyFrame(deathTimer);
+        } else if (isAttacking && attackAnim != null) {
             currentFrame = attackAnim.getKeyFrame(attackTimer);
         } else if (playerDetected && walkAnim != null) {
             currentFrame = walkAnim.getKeyFrame(stateTime);
@@ -417,19 +439,6 @@ public class Enemy extends Entity {
     public boolean isPlayerDetected() { return playerDetected; }
     public Body getBody() { return body; }
 
-    protected void onDeath() {}
-
-    public float getX() {
-        return position.x;
-    }
-
-    public float getY() {
-        return position.y;
-    }
-
-    public Vector2 getPosition() {
-        return position;
-    }
 
 
     @Override
@@ -443,6 +452,9 @@ public class Enemy extends Entity {
         }
         if (walkSheetTexture != null) {
             walkSheetTexture.dispose();
+        }
+        if (deathSheetTexture != null) {
+            deathSheetTexture.dispose();
         }
     }
 }

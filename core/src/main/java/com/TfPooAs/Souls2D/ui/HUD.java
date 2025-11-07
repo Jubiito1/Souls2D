@@ -181,6 +181,14 @@ public class HUD {
             font.draw(uiBatch, bossName, textX, textY);
         }
 
+        // === Contador de Almas (arriba derecha) ===
+        String almasTexto = "Almas: " + player.getSouls();
+        layout.setText(font, almasTexto);
+        float almasX = uiCamera.viewportWidth - layout.width - MARGEN;
+        float almasY = uiCamera.viewportHeight - MARGEN - 10f;
+        font.setColor(Color.GOLD);
+        font.draw(uiBatch, almasTexto, almasX, almasY);
+
         uiBatch.end();
         // Reset de color para no afectar a otros renders
         uiBatch.setColor(Color.WHITE);

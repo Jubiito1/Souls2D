@@ -89,6 +89,9 @@ public class Player extends Entity {
     private Texture rollSheetTexture;
     private Texture jumpSheetTexture;
 
+    // === Sistema de almas ===
+    private int souls = 0;
+
     // === Curación con Estus ===
     private estus estus = new estus();
     private boolean isHealing = false;
@@ -106,8 +109,6 @@ public class Player extends Entity {
     private Array<Enemy> enemies;
     private Array<Enemy2> rangedEnemies;
 
-    // Soul
-    private int souls = 0;
 
 
     public Player(World world, float x, float y) {
@@ -192,27 +193,6 @@ public class Player extends Entity {
 
     public void removeRangedEnemy(Enemy2 enemy) {
         rangedEnemies.removeValue(enemy, true);
-    }
-
-    // Metodo para recoger souls
-    // Sumar almas (uso cuando el jugador recoge un SoulOrb)
-    public void addSouls(int amount) {
-        if (amount <= 0) return;
-        this.souls += amount;
-        // opcional: reproducir SFX
-        try { SoundManager.playSfx("assets/soul_pickup.wav"); } catch (Exception ignored) {}
-        // opcional: feedback visual (puedes mostrar un +N sobre la cabeza)
-        System.out.println("Recogiste " + amount + " almas. Total: " + this.souls);
-    }
-
-    // Obtener la cantidad actual
-    public int getSouls() {
-        return this.souls;
-    }
-
-    // Setear (por ejemplo al cargar partida)
-    public void setSouls(int amount) {
-        this.souls = Math.max(0, amount);
     }
 
 
@@ -775,6 +755,21 @@ public class Player extends Entity {
         minAirborneVelY = 0f;
         rolledDuringFall = false;
         System.out.println("¡Player ha revivido!");
+    }
+
+    public void addSouls(int amount) {
+        if (amount <= 0) return;
+        souls += amount;
+        // Opcional: log para debug
+        System.out.println("Almas obtenidas: +" + amount + "  Total: " + souls);
+    }
+
+    public int getSouls() {
+        return souls;
+    }
+
+    public void setSouls(int value) {
+        this.souls = Math.max(0, value);
     }
 
     // === Getters ===

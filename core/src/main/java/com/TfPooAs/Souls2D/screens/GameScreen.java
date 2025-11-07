@@ -74,8 +74,7 @@ public class GameScreen implements Screen {
     private float bossSpawnY = 2170f;
 
 
-    // Souls
-    private ArrayList<SoulOrb> soulOrbs = new ArrayList<>();
+
 
     // Overlays
     private PauseOverlay pauseOverlay;
@@ -324,7 +323,6 @@ public class GameScreen implements Screen {
             SoundManager.pauseBackground();
             // Play death SFX once when death menu appears
             try { SoundManager.playSfx("assets/death.wav"); } catch (Exception ignored) { }
-            for (SoulOrb orb : soulOrbs) orb.render(batch);
 
         }
 
@@ -353,7 +351,6 @@ public class GameScreen implements Screen {
                 Enemy e = enemies.get(i);
                 e.update(delta);
                 if (e.isDead()) {
-                    spawnSoulOrbs(e.getX(), e.getY(), e.getSoulValue()); // genera almas
                     // Quitar enemigos muertos
                     if (player != null) player.removeEnemy(e);
                     e.dispose();
@@ -411,7 +408,6 @@ public class GameScreen implements Screen {
         for (Enemy e : enemies) e.render(batch); // enemigos melee
         for (Enemy2 e2 : rangedEnemies) e2.render(batch); // enemigos a distancia
         for (EnemyProjectile p : enemyProjectiles) p.render(batch); // proyectiles enemigos
-        for (SoulOrb orb : soulOrbs) orb.render(batch);
         batch.end();
 
         // Debug opcional
@@ -429,13 +425,6 @@ public class GameScreen implements Screen {
         if (hud != null) {
             // HUD visible incluso con overlays (pausa/muerte)
             hud.render(uiCamera, batch);
-        }
-    }
-
-    public void spawnSoulOrbs(float x, float y, int soulAmount) {
-        int orbCount = Math.max(1, soulAmount / 50); // genera 1 orb cada 50 almas
-        for (int i = 0; i < orbCount; i++) {
-            soulOrbs.add(new SoulOrb(x, y));
         }
     }
 

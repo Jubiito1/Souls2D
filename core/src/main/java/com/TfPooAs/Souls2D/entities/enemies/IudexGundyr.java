@@ -57,8 +57,6 @@ public class IudexGundyr extends Enemy {
     private float ATTACK_COOLDOWN = 3.5f;
     private float ATTACK_COOLDOWN_JITTER = 0.8f;
 
-    // === Almas ===
-    private int soulValue = 50;
 
 
     // === Estados del Boss ===
@@ -85,6 +83,12 @@ public class IudexGundyr extends Enemy {
     private Animation<TextureRegion> bossAttack1Anim;
     private Animation<TextureRegion> bossAttack2Anim;
 
+    // === Animación de muerte ===
+    private Animation<TextureRegion> bossDeathAnim;
+    private Texture deathTexture;
+    private float deathTimer = 0f;
+
+
     // Texturas para disposar
     private Texture idleTexture;
     private Texture walkTexture;
@@ -106,8 +110,6 @@ public class IudexGundyr extends Enemy {
         super(world, x, y, player);
         this.playerRef = player;
         this.body = getBody();
-        this.gameScreen = gameScreen;
-        this.soulValue = soulValue;
 
 
         loadBossAnimations();
@@ -174,6 +176,18 @@ public class IudexGundyr extends Enemy {
             baseFrame = new TextureRegion(fallback);
         }
 
+        // === ANIMACIÓN DE MUERTE ===
+        AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromSpritesheetIfExists(
+            "Iudex-Death-Sheet.png", 6, 1, 0.15f, Animation.PlayMode.NORMAL);
+        if (deathPair != null) {
+            this.bossDeathAnim = deathPair.animation;
+            this.deathTexture = deathPair.texture;
+            Gdx.app.log("IudexGundyr", "Animación DEATH cargada correctamente");
+        } else {
+            Gdx.app.error("IudexGundyr", "No se pudo cargar animación DEATH");
+        }
+
+
         this.width = baseFrame.getRegionWidth() * SCALE;
         this.height = baseFrame.getRegionHeight() * SCALE;
 
@@ -225,15 +239,17 @@ public class IudexGundyr extends Enemy {
         Gdx.app.log("IudexGundyr", "Boss inicializado con " + MAX_HP + " HP");
     }
 
-    public int getSoulValue() {
-        return soulValue;
-    }
-
 
 
     @Override
     public void update(float delta) {
-        if (currentState == BossState.DEAD) return;
+        if (currentState == BossState.DEAD && bossDeathAnim != null) {
+            if (!bossDeathAnim.isAnimationFinished(deathTimer)) {
+                deathTimer += delta;
+            }
+            return; // evita IA y ataques
+        }
+
 
         stateTimer += delta;
         totalTime += delta;
@@ -439,9 +455,14 @@ public class IudexGundyr extends Enemy {
         hp = Math.max(0, hp - damage);
 
         if (hp <= 0) {
-            currentState = BossState.DEAD;
+            hp = 0;
+            currentState = BossState.DEAD; // 🔹 Indicamos que está en muerte
+            deathTimer = 0f;                // 🔹 Reseteamos el tiempo de animación
             setActive(false);
-            onDeath();
+            if (player != null) {
+                int soulsReward = 50;
+                player.addSouls(soulsReward);
+            }
             Gdx.app.log("IudexGundyr", "¡Boss derrotado!");
         } else {
             Gdx.app.log("IudexGundyr", "Boss recibió " + damage + " daño. HP: " + hp + "/" + MAX_HP);
@@ -501,9 +522,17 @@ public class IudexGundyr extends Enemy {
                 }
                 return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
 
+            case DEAD:
+                return bossDeathAnim != null
+                    ? bossDeathAnim.getKeyFrame(deathTimer, false)
+                    : bossIdleAnim.getKeyFrame(totalTime, true);
+
+
             case IDLE:
             default:
                 return bossIdleAnim != null ? bossIdleAnim.getKeyFrame(totalTime, true) : null;
+
+
         }
     }
 
@@ -546,18 +575,6 @@ public class IudexGundyr extends Enemy {
 
     public void setAttack2Damage(int damage) {
         this.ATTACK2_DAMAGE = damage;
-    }
-
-    public float getX() {
-        return position.x;
-    }
-
-    public float getY() {
-        return position.y;
-    }
-
-    public Vector2 getPosition() {
-        return position;
     }
 
     @Override
