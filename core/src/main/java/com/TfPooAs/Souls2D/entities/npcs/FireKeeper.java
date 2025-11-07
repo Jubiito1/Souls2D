@@ -13,7 +13,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Vector2;
 import com.TfPooAs.Souls2D.screens.GameScreen;
-import com.TfPooAs.Souls2D.systems.SaveSystem;
 
 
 /**
@@ -63,8 +62,6 @@ public class FireKeeper extends NPC implements Disposable {
     private int currentLine = 0;
     private boolean talking = false;
     private int currentBossAliveMessageIndex = 0; // Para rotar mensajes cuando el boss está vivo
-    // Mostrar ranking al interactuar
-    private boolean showLeaderboard = false;
 
     private void loadAnimation(String path, int cols, int rows, float frameDuration) {
         spriteSheet = new Texture(Gdx.files.internal(path));
@@ -132,9 +129,7 @@ public class FireKeeper extends NPC implements Disposable {
                 if (currentLine >= dialog.length) {
                     talking = false;
                     currentLine = 0;
-                    // Guardar ranking al pasar el juego con las almas obtenidas
-                    int souls = player != null ? player.getSouls() : 0;
-                    game.showVictoryScreen(souls);
+                    game.showVictoryScreen();
                     return;
                 }
             }
