@@ -16,6 +16,7 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.TfPooAs.Souls2D.systems.SoundManager;
+import com.TfPooAs.Souls2D.systems.SaveSystem;
 
 
 public class IudexGundyr extends Enemy {
@@ -453,6 +454,11 @@ public class IudexGundyr extends Enemy {
         if (hp <= 0) {
             currentState = BossState.DEAD;
             setActive(false);
+            try {
+                SaveSystem.setIudexDefeated(true);
+            } catch (Exception ex) {
+                Gdx.app.error("IudexGundyr", "No se pudo marcar al boss como derrotado: " + ex.getMessage());
+            }
             Gdx.app.log("IudexGundyr", "¡Boss derrotado!");
         } else {
             Gdx.app.log("IudexGundyr", "Boss recibió " + damage + " daño. HP: " + hp + "/" + MAX_HP);

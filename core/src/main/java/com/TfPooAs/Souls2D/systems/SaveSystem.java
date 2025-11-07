@@ -14,6 +14,7 @@ public class SaveSystem {
     public static class SaveData {
         public Float lastBonfireX; // píxeles
         public Float lastBonfireY; // píxeles
+        public Boolean iudexDefeated; // estado del jefe
     }
 
     private static FileHandle getFile() {
@@ -31,6 +32,24 @@ public class SaveSystem {
             Gdx.app.log("SaveSystem", "Saved last bonfire at (" + x + ", " + y + ")");
         } catch (Exception e) {
             Gdx.app.error("SaveSystem", "Failed to save: " + e.getMessage(), e);
+        }
+    }
+
+    public static boolean isIudexDefeated() {
+        SaveData d = load();
+        return d != null && d.iudexDefeated != null && d.iudexDefeated;
+    }
+
+    public static void setIudexDefeated(boolean defeated) {
+        try {
+            SaveData data = load();
+            if (data == null) data = new SaveData();
+            data.iudexDefeated = defeated;
+            Json json = new Json();
+            getFile().writeString(json.prettyPrint(data), false, "UTF-8");
+            Gdx.app.log("SaveSystem", "Set Iudex defeated = " + defeated);
+        } catch (Exception e) {
+            Gdx.app.error("SaveSystem", "Failed to set boss flag: " + e.getMessage(), e);
         }
     }
 
