@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="340" height="120" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="531">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="340" height="120" tilewidth="32" tileheight="32" infinite="0" nextlayerid="11" nextobjectid="532">
  <tileset firstgid="1" source="tilemapeardo.tsx"/>
  <tileset firstgid="226" source="tilemapeardo2.tsx"/>
  <imagelayer id="9" name="Capa de Imagen 1" offsetx="9211.33" offsety="-148">
@@ -257,6 +257,9 @@
   <object id="470" name="bonfire" x="5952.25" y="1567.75" width="31.75" height="32.25"/>
   <object id="471" name="bonfire" x="2912.33" y="1312" width="31.6667" height="31.3333"/>
   <object id="472" name="bonfire" x="1632.18" y="1728.18" width="31.8182" height="31.4545"/>
+ </objectgroup>
+ <objectgroup id="10" name="Death" class="Death">
+  <object id="531" name="Death" x="4647" y="3800.5" width="3968.5" height="41.5"/>
  </objectgroup>
  <objectgroup id="6" name="Collisions">
   <object id="18" x="1090.5" y="1704" width="253.5" height="24"/>

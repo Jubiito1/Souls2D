@@ -1,3 +1,4 @@
+
 package com.TfPooAs.Souls2D.screens;
 
 import com.badlogic.gdx.Screen;
@@ -135,6 +136,24 @@ public class GameScreen implements Screen {
                     if (player != null) player.setGrounded(true);
                 }
 
+                // NUEVO: Player vs Death Tile
+                if (("player".equals(a.getUserData()) && "death_tile".equals(b.getUserData())) ||
+                    ("player".equals(b.getUserData()) && "death_tile".equals(a.getUserData()))) {
+                    if (player != null && !player.isDead()) {
+                        // Matar al jugador instantáneamente
+                        player.takeDamage(player.getCurrentHealth()); // Daño igual a toda su vida
+                        Gdx.app.log("GameScreen", "¡El jugador tocó una tile de muerte!");
+
+                        // Opcional: Reproducir sonido especial de muerte
+                        try {
+                            SoundManager.playSfx("assets/death_instant.wav");
+                        } catch (Exception ignored) {
+                            // Si no existe el archivo, usar el sonido normal de daño
+                            try { SoundManager.playSfx("assets/hurt.wav"); } catch (Exception e) { }
+                        }
+                    }
+                }
+
                 // Enemy vs Ground (aplica a enemigos melee y a distancia)
                 if (("enemy".equals(a.getUserData()) && "ground".equals(b.getUserData())) ||
                     ("enemy".equals(b.getUserData()) && "ground".equals(a.getUserData()))) {
@@ -224,9 +243,14 @@ public class GameScreen implements Screen {
             if (mo instanceof RectangleMapObject) {
                 Rectangle rect = ((RectangleMapObject) mo).getRectangle();
                 // En el futuro, leer propiedad 'type' para diferentes NPCs
-                fireKeepers.add(new FireKeeper(rect.x, rect.y, game));
+                fireKeepers.add(new FireKeeper(rect.x, rect.y, game, this)); // Pasamos 'this' como GameScreen
             }
         }
+    }
+
+    // Método para verificar si el boss está vivo
+    public boolean isBossAlive() {
+        return boss != null && !boss.isDead();
     }
 
     @Override
@@ -239,7 +263,7 @@ public class GameScreen implements Screen {
         // Note: audio files are placed directly under assets/ in this project.
         SoundManager.playBackground("assets/musica.wav", true);
 
-        if (player == null) player = new Player(world, 1200, 750);
+
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {
             float[] pos = SaveSystem.loadLastBonfire();
             if (pos != null) {
@@ -250,15 +274,14 @@ public class GameScreen implements Screen {
         if (pauseOverlay == null) pauseOverlay = new PauseOverlay(game, this);
         if (deathOverlay == null) deathOverlay = new DeathOverlay(game, this);
 
-        fireKeepers.add(new FireKeeper(10000, 2419, game)); // X,Y donde quieras que aparezca
+        // Cambiar para usar el nuevo constructor con GameScreen
+        fireKeepers.add(new FireKeeper(10000, 2419, game, this)); // Pasamos 'this' como GameScreen
         // Crear varios enemigos después de crear el player (solo una vez)
         if (enemies.isEmpty()) {
             float[][] spawnPoints = new float[][]{
                 {1600, 2170},
                 {2100, 2170},
-
                 {2600, 3170},
-
                 {3700, 2170},
                 {4500, 2170},
                 {5800, 2570},
@@ -410,7 +433,7 @@ public class GameScreen implements Screen {
 
         // Debug opcional
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
-        
+
 
 
         // Overlays primero (se dibujan sobre el juego)
@@ -466,6 +489,8 @@ public class GameScreen implements Screen {
             }
         } catch (Exception e) {
             Gdx.app.error("GameScreen", "Failed to resume to last save: " + e.getMessage(), e);
+        } finally {
+
         }
         isPaused = false;
         if (pauseOverlay != null) pauseOverlay.hide();

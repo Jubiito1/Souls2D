@@ -26,6 +26,7 @@ public class LevelLoader {
         this.map = new TmxMapLoader().load(mapPath);
         parseCollisions();
         parseInteractables(); //  lee hogueras
+        parseDeathTiles(); // Nueva función para tiles de muerte
     }
 
     private void parseCollisions() {
@@ -110,6 +111,40 @@ public class LevelLoader {
                 float x = rect.x + rect.width / 2f;
                 float y = rect.y + rect.height / 2f;
                 bonfires.add(new Bonfire(x, y));
+            }
+        }
+    }
+
+    // Nueva función para procesar tiles de muerte
+    private void parseDeathTiles() {
+        MapLayer deathLayer = map.getLayers().get("Death");
+        if (deathLayer == null) return;
+
+        for (MapObject object : deathLayer.getObjects()) {
+            if (object instanceof RectangleMapObject) {
+                Rectangle rect = ((RectangleMapObject) object).getRectangle();
+
+                // Crear cuerpo físico para la tile de muerte
+                BodyDef bdef = new BodyDef();
+                bdef.type = BodyDef.BodyType.StaticBody;
+                bdef.position.set(
+                    (rect.x + rect.width / 2) / Constants.PPM,
+                    (rect.y + rect.height / 2) / Constants.PPM
+                );
+
+                Body body = world.createBody(bdef);
+                PolygonShape shape = new PolygonShape();
+                shape.setAsBox(rect.width / 2 / Constants.PPM, rect.height / 2 / Constants.PPM);
+
+                FixtureDef fdef = new FixtureDef();
+                fdef.shape = shape;
+                fdef.isSensor = true; // Importante: es un sensor, no bloquea físicamente
+                fdef.filter.categoryBits = Constants.BIT_GROUND; // Usar la misma categoría que el suelo
+                fdef.filter.maskBits = Constants.BIT_PLAYER; // Solo colisiona con el jugador
+
+                // Marcar como tile de muerte
+                body.createFixture(fdef).setUserData("death_tile");
+                shape.dispose();
             }
         }
     }
