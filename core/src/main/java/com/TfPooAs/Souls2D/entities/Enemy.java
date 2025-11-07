@@ -105,9 +105,9 @@ public class Enemy extends Entity {
         }
 
         // Muerte (columnas auto)
-        int[] deathCols = new int[] {10, 9, 8, 7, 6, 5, 4, 3, 2};
+
         AnimationUtils.AnimWithTexture deathPair = AnimationUtils.createFromHorizontalSheetAutoCols(
-            "enemy1-death-Sheet.png", deathCols, 0.10f, Animation.PlayMode.NORMAL);
+            "enemy1-death-Sheet.png", 4,0.10f, Animation.PlayMode.NORMAL);
         if (deathPair != null) {
             this.deathAnim = deathPair.animation;
             this.deathSheetTexture = deathPair.texture;
