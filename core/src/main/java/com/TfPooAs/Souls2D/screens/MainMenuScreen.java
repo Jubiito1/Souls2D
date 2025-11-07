@@ -116,7 +116,7 @@ public class MainMenuScreen implements Screen {
     /** Genera las fuentes Garamond: título, subtítulo y botones. */
     private void generateFonts() {
         try {
-            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/ui/Garamond.otf"));
+            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("ui/Garamond.otf"));
             FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
             // Fuente del título (muy grande)
@@ -144,7 +144,7 @@ public class MainMenuScreen implements Screen {
     public void show() {
         Gdx.input.setInputProcessor(stage);
         // Play menu background music (loop). Safe if file is missing.
-        SoundManager.playBackground("assets/menu.wav", true);
+        SoundManager.playBackground("menu.wav", true);
     }
 
     @Override

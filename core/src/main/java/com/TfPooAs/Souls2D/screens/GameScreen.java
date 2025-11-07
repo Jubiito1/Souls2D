@@ -205,7 +205,7 @@ public class GameScreen implements Screen {
         });
 
 
-        Texture fondo = new Texture("backgrounds/fondo.png");
+        Texture fondo = new Texture(Gdx.files.internal("backgrounds/fondo.png"));
 
         Texture[] layers = { fondo };
         float[] speeds = { 1f }; // Menor = más lejos, Mayor = más cercano
@@ -237,7 +237,7 @@ public class GameScreen implements Screen {
 
         // Start background music (loops). File is optional; SoundManager handles missing file gracefully.
         // Note: audio files are placed directly under assets/ in this project.
-        SoundManager.playBackground("assets/musica.wav", true);
+        SoundManager.playBackground("musica.wav", true);
 
         if (player == null) player = new Player(world, 1200, 750);
         if (startAtLastSave && SaveSystem.hasLastBonfire()) {
@@ -321,7 +321,7 @@ public class GameScreen implements Screen {
             // Pause background music when death screen shows
             SoundManager.pauseBackground();
             // Play death SFX once when death menu appears
-            try { SoundManager.playSfx("assets/death.wav"); } catch (Exception ignored) { }
+            try { SoundManager.playSfx("death.wav"); } catch (Exception ignored) { }
         }
 
         if (!isDeathShown && Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
@@ -410,7 +410,7 @@ public class GameScreen implements Screen {
 
         // Debug opcional
         Matrix4 debugMatrix = new Matrix4(camera.combined).scl(Constants.PPM);
-        
+
 
 
         // Overlays primero (se dibujan sobre el juego)
@@ -506,5 +506,6 @@ public class GameScreen implements Screen {
         for (EnemyProjectile p : enemyProjectiles) p.dispose();
         enemyProjectiles.clear();
         if (hud != null) hud.dispose();
+        if (parallax != null) parallax.dispose();
     }
 }

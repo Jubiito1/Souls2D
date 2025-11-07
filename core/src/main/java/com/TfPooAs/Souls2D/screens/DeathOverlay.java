@@ -49,7 +49,7 @@ public class DeathOverlay {
         try {
             // Ruta esperada: core/assets/fonts/AdobeGaramond-Bold.otf
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
-                Gdx.files.internal("assets/ui/Garamond.otf"));
+                Gdx.files.internal("ui/Garamond.otf"));
             FreeTypeFontGenerator.FreeTypeFontParameter param = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
             // Fuente para el título (muy grande)

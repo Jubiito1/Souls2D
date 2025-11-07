@@ -49,7 +49,7 @@ public class PauseOverlay {
     private void generateFonts() {
         try {
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
-                Gdx.files.internal("assets/ui/Garamond.otf"));
+                Gdx.files.internal("ui/Garamond.otf"));
             FreeTypeFontGenerator.FreeTypeFontParameter parameter =
                 new FreeTypeFontGenerator.FreeTypeFontParameter();
 
