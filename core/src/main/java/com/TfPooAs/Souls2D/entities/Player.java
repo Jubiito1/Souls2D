@@ -42,8 +42,8 @@ public class Player extends Entity {
     private boolean rolledDuringFall = false; // si roló en cualquier momento de la caída
 
     // === Sistema de vida ===
-    private int maxHealth = 100;
-    private int currentHealth = 100;
+    private int maxHealth = 10000;
+    private int currentHealth = 10000;
     private boolean isDead = false;
 
     // === Sistema de stamina ===
@@ -66,7 +66,7 @@ public class Player extends Entity {
     private final float ATTACK_DURATION = 0.3f;
     private boolean facingRight = true;
     private final float ATTACK_RANGE = 100f; // rango de ataque en píxeles
-    private final int ATTACK_DAMAGE = 25; // daño que hace a enemigos
+    private final int ATTACK_DAMAGE = 2500; // daño que hace a enemigos
     // Ventana de impacto del ataque (porcentaje del tiempo total)
     private boolean hasDealtDamageThisAttack = false;
 
