@@ -281,22 +281,34 @@ public class GameScreen implements Screen {
         //     fuera de los bucles de actualización/dibujo de entidades.
         if (victoryRequested && !victoryProcessed) {
             victoryProcessed = true;
-            // Pausar/stop música y reproducir SFX si lo querés
-            try { SoundManager.pauseBackground(); } catch (Exception ignored) {}
-            try { SoundManager.playSfx("victory.wav"); } catch (Exception ignored) {}
-            // Cambiar de pantalla mediante GSM (usa tu GameScreenManager)
+
             try {
-                if (game != null && game.gsm != null) {
-                    game.gsm.setScreen(new VictoryScreen(game));
-                    return; // devolvemos para no seguir con este render
-                } else if (game != null) {
-                    game.setScreen(new VictoryScreen(game));
-                    return;
+                SoundManager.pauseBackground();
+                SoundManager.playSfx("victory.wav");
+            } catch (Exception ignored) {}
+
+            // Obtenemos almas del jugador (si existe)
+            int souls = (player != null) ? player.getSouls() : 0;
+
+            Gdx.app.log("GameScreen", "Mostrando NameInputScreen (souls=" + souls + ")");
+
+            // Mostrar pantalla de ingreso de nombre
+            if (game != null && game.gsm != null) {
+                try {
+                    game.gsm.setActiveScreenNormal(new NameInputScreen(game, souls));
+                } catch (Exception e) {
+                    Gdx.app.error("GameScreen", "Error al abrir NameInputScreen: " + e.getMessage(), e);
+                    try {
+                        game.gsm.setActiveScreenNormal(new VictoryScreen(game));
+                    } catch (Exception ex) {
+                        Gdx.app.error("GameScreen", "Error alternativo: " + ex.getMessage(), ex);
+                    }
                 }
-            } catch (Exception e) {
-                Gdx.app.error("GameScreen", "No se pudo cambiar a VictoryScreen: " + e.getMessage(), e);
             }
+
+            return; // detener render normal
         }
+
 
         // --- Trigger automático de DeathOverlay cuando el jugador muere ---
         if (!isDeathShown && player != null && player.isDead()) {

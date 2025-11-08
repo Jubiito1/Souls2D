@@ -354,7 +354,7 @@ public class Enemy extends Entity {
             currentHealth = 0;
             // Otorgar almas al jugador (una sola vez)
             if (!soulsGranted && player != null) {
-                int reward = MathUtils.random(10, 15);
+                int reward = 100;
                 player.addSouls(reward);
                 soulsGranted = true;
             }

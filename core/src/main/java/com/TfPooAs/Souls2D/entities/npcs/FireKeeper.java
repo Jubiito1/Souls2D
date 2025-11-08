@@ -117,26 +117,22 @@ public class FireKeeper extends NPC implements Disposable {
             } else {
                 currentLine++;
 
-                // Si se terminó el diálogo → solicitar victory al GameScreen (no cambiar pantalla aquí)
+                // Si se terminó el diálogo → solicitar victoria al GameScreen
                 if (currentLine >= dialog.length) {
                     talking = false;
                     currentLine = 0;
+
                     if (gameScreen != null) {
-                        gameScreen.requestVictory(); // <-- petición segura
-                    } else {
-                        // Fallback: si no hay GameScreen (raro), intentar usar gsm/ Main pero protegido.
-                        try {
-                            if (game != null && game.gsm != null) {
-                                game.gsm.setScreen(new com.TfPooAs.Souls2D.screens.VictoryScreen(game));
-                            } else if (game != null) {
-                                game.setScreen(new com.TfPooAs.Souls2D.screens.VictoryScreen(game));
-                            }
-                        } catch (Exception e) {
-                            Gdx.app.error("FireKeeper", "No se pudo abrir VictoryScreen fallback: " + e.getMessage());
-                        }
+                        gameScreen.requestVictory();
+                        Gdx.app.log("FireKeeper", "Solicitud de victoria enviada al GameScreen.");
+                    } else if (game != null && game.gsm != null) {
+                        game.gsm.setActiveScreenNormal(new com.TfPooAs.Souls2D.screens.VictoryScreen(game));
                     }
+
+
                     return;
                 }
+
             }
         }
     }

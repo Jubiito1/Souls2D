@@ -87,6 +87,11 @@ public class GameScreenManager {
         }
     }
 
+    public void showVictoryScreen() {
+        setActiveScreenNormal(new VictoryScreen(game));
+    }
+
+
     public void update(float delta) {
         // lógica global futura
     }
