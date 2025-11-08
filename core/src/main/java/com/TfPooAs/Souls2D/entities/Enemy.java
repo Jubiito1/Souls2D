@@ -24,8 +24,8 @@ public class Enemy extends Entity {
     private static Texture whiteTex;
 
     // === Sistema de vida ===
-    private int maxHealth = 70;
-    private int currentHealth = 70;
+    private int maxHealth = 120;
+    private int currentHealth = 120;
     private boolean isDead = false;
     // Recompensas
     private boolean soulsGranted = false;
@@ -48,7 +48,7 @@ public class Enemy extends Entity {
     private final float ATTACK_COOLDOWN = 1.5f; // tiempo entre ataques
     private float attackCooldownTimer = 0f;
     private final float ATTACK_FORCE = 2.5f; // fuerza del dash de ataque
-    private final int ATTACK_DAMAGE = 15; // daño que hace al jugador
+    private final int ATTACK_DAMAGE = 25; // daño que hace al jugador
 
     // === Movimiento mejorado ===
     private final float MOVE_SPEED = 0.25f; // velocidad de persecución

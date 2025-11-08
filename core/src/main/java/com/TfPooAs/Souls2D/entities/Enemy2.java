@@ -29,8 +29,8 @@ public class Enemy2 extends Entity {
     private static Texture whiteTex;
 
     // Vida
-    private int maxHealth = 30;
-    private int currentHealth = 30;
+    private int maxHealth = 70;
+    private int currentHealth = 70;
     private boolean isDead = false;
     // Recompensas
     private boolean soulsGranted = false;
@@ -46,7 +46,7 @@ public class Enemy2 extends Entity {
     private final float MOVE_SPEED = 0.15f; // se reposiciona suavemente
     private final float SHOOT_COOLDOWN = 3f;
     private float shootCooldownTimer = 0f;
-    private final int PROJECTILE_DAMAGE = 25;
+    private final int PROJECTILE_DAMAGE = 20;
     private final float PROJECTILE_SPEED = 5f; // unidades Box2D m/s
     private final float PROJECTILE_LIFETIME = 4.0f;
 
